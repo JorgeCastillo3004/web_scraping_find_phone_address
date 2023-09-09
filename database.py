@@ -16,7 +16,7 @@ def getPeopleContact(dbase):
 	result = data.fetchall()    
 	return result
 
-def getPeopleContactByFile(dbase, filename_):	
+def getPeopleContactByFile(dbase, filename_):
 	data = dbase.execute("SELECT name, phone, address FROM people WHERE filename =='{}'".format(filename_))	
 	result = data.fetchall()    
 	return result
@@ -63,7 +63,7 @@ createTablePeople(dbase)
 #     }
 
 # insertNewRegister(dbase, dictdata, 'filename.csv')
-# results = getPeopleContactByFile(dbase, '*')
+# results = getPeopleContactByFile(dbase, 'filename.csv')
 
 # print("results", results)
 
