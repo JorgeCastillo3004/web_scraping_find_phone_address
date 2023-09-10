@@ -61,7 +61,7 @@ To handle CAPTCHA challenges, ensure you have configured a CAPTCHA solving servi
 
 ## Contributors
 
-- Your Name - [Jorge Castillo](https://github.com/JorgeCastillo3004)
+[Jorge Luis Castillo Sánchez](https://github.com/JorgeCastillo3004)
 
 ## License
 
