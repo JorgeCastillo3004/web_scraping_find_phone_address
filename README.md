@@ -72,10 +72,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Mention any acknowledgments or resources used during the project, if applicable.
 
 ## YouTube Video Demo
-# FastPeopleSearch Web Scraping Project
 
-[![Watch the video](https://img.youtube.com/vi/or7lcoayDUYuknjP/0.jpg)](https://www.youtube.com/watch?v=or7lcoayDUYuknjP)
+For a detailed demonstration of the project's complexity and the efficiency of the recursive function, please watch the YouTube video below:
 
+[![Project Demo](https://img.youtube.com/vi/or7lcoayDUYuknjP/0.jpg)](https://www.youtube.com/watch?v=or7lcoayDUYuknjP)
+
+Click on the image to watch the demo video
 
 ## Support and Contact
 
