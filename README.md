@@ -73,7 +73,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## YouTube Video Demo
 
-For a detailed demonstration of the project's complexity and the efficiency of the recursive function, please watch the YouTube video below:
+For a detailed demonstration of the project, please watch the YouTube video below:
 
 [![Project Demo](https://img.youtube.com/vi/EdyClQ97ahE/0.jpg)](https://www.youtube.com/watch?v=EdyClQ97ahE)
 
