@@ -17,9 +17,9 @@ This Python-based web scraping project is designed to extract information from t
 Before running the script, ensure you have the following dependencies installed:
 
 - Python 3.x
-- Required Python libraries (e.g., requests, BeautifulSoup, Selenium for CAPTCHA handling)
-- Web driver for browser automation (e.g., ChromeDriver or GeckoDriver)
-- CAPTCHA solving service or API credentials (if applicable)
+- Required Python libraries (selenium, chromedriver-autoinstaller, pyqt5, pandas)
+- Web driver for browser automation ChromeDriver.
+- CAPTCHA solving service and confirm to continue with the process extraction.
 
 ## Installation
 
