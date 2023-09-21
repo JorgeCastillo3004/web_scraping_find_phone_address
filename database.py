@@ -36,40 +36,4 @@ def insertNewRegister(dbase, dictdata, filename_):
 
 dbase = createConection()
 createTablePeople(dbase)
-# dictdata = {
-#         "search_name": "William Roboski",
-#         "search_address": "Edgewater FL 32141",
-#         "name": "William Roboski",
-#         "primary_phone": "(321) 663-8417",
-#         "list_phones": {
-#             "0": "(407) 366-0067",
-#             "1": "(407) 366-4294",
-#             "2": "(407) 267-2288",
-#             "3": "(407) 340-7165",
-#             "4": "(407) 758-0498",
-#             "5": "(425) 369-9852",
-#             "6": "(407) 365-5495"
-#         },
-#         "main_address": "4689 Bayfield Harbor Ln Edgewater FL 32141",
-#         "past_address": {
-#             "0": "2311 Guava Dr Edgewater FL 32141",
-#             "1": "825 E State Road 434 Winter Springs FL 32708",
-#             "2": "429 Terrace Dr Oviedo FL 32765",
-#             "3": "405 Hunters Run Edgefield SC 29824",
-#             "4": "1425 Spalding Rd Winter Springs FL 32708",
-#             "5": "2476 Mills Creek Rd Chuluota FL 32766"
-#         },
-#         "status": "found"
-#     }
-
-# insertNewRegister(dbase, dictdata, 'filename.csv')
-# results = getPeopleContactByFile(dbase, 'filename.csv')
-
-# print("results", results)
-
-# for result in results:
-#  	print(result)
-
-
-
 closeConection(dbase)
