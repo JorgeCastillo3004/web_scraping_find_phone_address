@@ -201,7 +201,7 @@ def get_address(card_block):
             break   
     return {'main_address': main_address, 'past_address':dict_old_address}
 
-def getName_age(card_block):    
+def get_name_age(card_block):    
     HTML = card_block.get_attribute('outerHTML')
     name, age = 'unfound','unfound'
     if 'Full Name:' in HTML:
@@ -240,7 +240,7 @@ def get_block_results(df_all, selected_file):
     dict_register['search_address'] = address_search
     dict_partial_info = {}
     for card_block in card_blocks:
-        name, age = getName_age(card_block)        
+        name, age = get_name_age(card_block)        
         dict_register['name'] = name
         dict_register['age'] = age
 
