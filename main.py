@@ -90,12 +90,12 @@ class WindowMain(QWidget):
         self.ButtonSearchByAddress.clicked.connect(self.ExecuteSearchByAddress)
 
         self.showDataBase = QtWidgets.QCheckBox("data base")
-        self.showDataBase.setCheckState(Qt.Checked)
+        self.showDataBase.setCheckState(Qt.CheckState.Checked)
         self.showDataBase.setChecked(True)
         self.showDataBase.stateChanged.connect(self.ExecuteShowDataBase)
 
         self.showCurrentFile = QtWidgets.QCheckBox("Current file")
-        self.showCurrentFile.setCheckState(Qt.Checked)
+        self.showCurrentFile.setCheckState(Qt.CheckState.Checked)
         self.showCurrentFile.stateChanged.connect(self.ExecuteShowCurrentFile)
         self.showCurrentFile.setChecked(False)
         
@@ -417,10 +417,13 @@ def SetInicio(self):
     self.SideButton.addWidget(self.ButtonRestart)
 
     # CREATE AND ADD VERTICAL SPACER TO LAYER SIDEBUTTONS
-    self.VerticalSpacer = QFrame()
-    self.VerticalSpacer.Shape(QFrame.VLine)
-    self.VerticalSpacer.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Expanding)    
-    self.SideButton.addWidget(self.VerticalSpacer)
+    self.VerticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+    # self.VerticalSpacer = QFrame()
+    # self.VerticalSpacer.Shape(QFrame.VLine)
+    # self.VerticalSpacer.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Expanding)    
+
+    self.SideButton.addItem(self.VerticalSpacer)
+    # self.SideButton.addWidget(self.VerticalSpacer)
 
     # ADD OTHERS LAYOUTS TO THE MAIN LAYOUT
     self.Mainlayout.addLayout(self.FirstButtonlayout)
@@ -516,6 +519,7 @@ if __name__ == "__main__":
     # window.setCentralWidget (frm)
     # window.resize(340, 440)
     window.show()
-    sys.exit(app.exec_())    
+    # sys.exit(app.exec_())    
+    app.exec()
     closeConection(dbase)
     driver.close()
