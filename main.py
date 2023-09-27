@@ -4,8 +4,8 @@ import sys
 from datetime import date
 from database import *
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import (
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtWidgets import (
     QApplication,
     QGridLayout,
     QVBoxLayout,
@@ -18,9 +18,9 @@ from PyQt5.QtWidgets import (
     QFormLayout
 )
 
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtCore import *
+from PyQt6.QtWidgets import *
+from PyQt6.QtWidgets import QMessageBox
 
 #### LOAD MODULES ###
 from control import *
