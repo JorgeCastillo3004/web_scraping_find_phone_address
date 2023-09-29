@@ -312,7 +312,7 @@ class WindowMain(QWidget):
         # file_dialog = QFileDialog()
         # file_dialog.setOptions(options)        
         # self.selected_file, _ = file_dialog.getOpenFileName(self, "Open File", ".csv", "All files (*)")
-        self.selected_file, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt);;Image Files (*.png *.jpg)")
+        self.selected_file, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*)")
 
         if self.selected_file:
             self.updateFile.emit()
@@ -334,7 +334,7 @@ class WindowMain(QWidget):
         # Show the folder dialog and get the selected folder
         # self.export_file_name, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","","All Files (*);;Text Files (*.txt)", options=options)
         # self.export_file_name, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt);;Image Files (*.png *.jpg)")
-        self.export_file_name, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Text Files (*.txt);;All Files (*)")
+        self.export_file_name, _ = QFileDialog.getSaveFileName(self, "Save File", "", "All Files (*)")
 
         if self.export_file_name:            
             self.updateExportFile.emit()
