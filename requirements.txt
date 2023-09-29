@@ -1,3 +1,4 @@
 selenium
 chromedriver-autoinstaller
-pyqt6
+PyQt6
+pandas
