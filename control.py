@@ -34,27 +34,6 @@ def PrintException():
     line = linecache.getline(filename, lineno, f.f_globals)
     print ('EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
 
-def optionsConfiguration():
-    global options
-    # Adding argument to disable the AutomationControlled flag 
-    options.add_argument("--disable-blink-features=AutomationControlled") 
-
-    # Exclude the collection of enable-automation switches 
-    options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
-
-    # Turn-off userAutomationExtension 
-    options.add_experimental_option("useAutomationExtension", False)    
-
-    # Define default profiles folder
-
-    # options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
-    # # Define profile folder, profile number
-
-    options.add_argument(r"user-data-dir=/home/jorge/.config/google-chrome/")
-    # Define profile folder, profile number
-    options.add_argument(r"profile-directory=Profile 2")
-        # launch chrome navigator
-    
 #########################################################################################
 #                                                                                       #
 #                SECTION FOR SAVE AND LOAD CHECK POINTS                                 #
@@ -312,13 +291,32 @@ def detectCatpcha(max_try = 2):
 def closeDriver():
     driver.quit()
 ######################################################################################### 
+def optionsConfiguration(flag_load_profile = False):
+    global options
+    # Adding argument to disable the AutomationControlled flag 
+    options.add_argument("--disable-blink-features=AutomationControlled") 
+
+    # Exclude the collection of enable-automation switches 
+    options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
+
+    # Turn-off userAutomationExtension 
+    options.add_experimental_option("useAutomationExtension", False)    
+
+    # Define default profiles folder
+    # options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
+    if flag_load_profile:
+        # # Define profile folder, profile number
+        options.add_argument(r"user-data-dir=/home/jorge/.config/google-chrome/")
+        # Define profile folder, profile number
+        options.add_argument(r"profile-directory=Profile 2")
+        # launch chrome navigator
 
 def launchNavigator():
     global options, driver
     options = webdriver.ChromeOptions()
-    optionsConfiguration()
-    options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36")
-    options.add_experimental_option("prefs", {"profile.default_content_setting_values.cookies": 2})
+    optionsConfiguration(flag_load_profile = True)
+    # options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36")
+    # options.add_experimental_option("prefs", {"profile.default_content_setting_values.cookies": 2})
     driver = webdriver.Chrome(options=options)
     # Changing the property of the navigator value for webdriver to undefined     
 
