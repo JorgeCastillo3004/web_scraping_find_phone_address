@@ -314,7 +314,7 @@ def optionsConfiguration(flag_load_profile = False):
 def launchNavigator():
     global options, driver
     options = webdriver.ChromeOptions()
-    optionsConfiguration(flag_load_profile = True)
+    optionsConfiguration(flag_load_profile = False)
     # options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36")
     # options.add_experimental_option("prefs", {"profile.default_content_setting_values.cookies": 2})
     driver = webdriver.Chrome(options=options)
