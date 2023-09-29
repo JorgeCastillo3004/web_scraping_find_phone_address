@@ -27,7 +27,27 @@ from database import *
 # driver = webdriver.Chrome(options=options)
 # driver.get("https://www.fastpeoplesearch.com/")
 
+def optionsConfiguration():
+    global options
+    # Adding argument to disable the AutomationControlled flag 
+    options.add_argument("--disable-blink-features=AutomationControlled") 
 
+    # Exclude the collection of enable-automation switches 
+    options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
+
+    # Turn-off userAutomationExtension 
+    options.add_experimental_option("useAutomationExtension", False)    
+
+    # Define default profiles folder
+
+    # options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
+    # # Define profile folder, profile number
+
+    options.add_argument(r"user-data-dir=/home/jorge/.config/google-chrome/")
+    # Define profile folder, profile number
+    options.add_argument(r"profile-directory=Profile 2")
+        # launch chrome navigator
+        
 def launchNavigator():
     global options, driver
     options = webdriver.ChromeOptions()
