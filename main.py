@@ -315,8 +315,15 @@ class WindowMain(QWidget):
         self.selected_file, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*)")
 
         if self.selected_file:
-            self.updateFile.emit()
-            self.loadFileFlag = True        
+            self.updateFile.emit()            
+            list_missed_columns = validate_file_colums(self.selected_file)
+            if len(list_missed_columns) != 0:                
+                self.WindowAlertMissedColumns= WindowAlertMissedColumns()
+                self.WindowAlertMissedColumns.missedcolumns = "Missed columns: "+ str(' ,'.join(list_missed_columns))
+                print(self.WindowAlertMissedColumns.missedcolumns)
+                self.WindowAlertMissedColumns.show()
+            else:
+                self.loadFileFlag = True
 
         previous_registers = getPeopleContactByFile(self.dbase, self.selected_file)        
         if len(previous_registers)!=0:        
@@ -520,6 +527,33 @@ class WindowsSelectCheckPoint(QWidget):
         self.close()
         self.last_row = 0
         self.setcheckpoint.emit(self)
+
+class WindowAlertMissedColumns(QWidget):
+    # reactivateSignal = pyqtSignal()
+    def __init__(self):
+        super().__init__()      
+        self.setWindowTitle("Missed Columns...")
+        self.setGeometry(150, 150, 260, 180)
+
+        self.ButtonError = QtWidgets.QPushButton('Check columns names')
+        self.ButtonError.setFixedSize(180, 20)
+        self.ButtonError.clicked.connect(self.CloseWindows)
+
+        # self.MissedColumns = QtWidgets.QTextEdit()        
+        # self.MissedColumns.setFixedSize(350, 100)
+        # self.MissedColumns.setText(missedcolumns)
+
+
+        self.Mainlayout = QVBoxLayout()
+        self.Mainlayout.addWidget(self.ButtonError)
+        # self.Mainlayout.addWidget(self.MissedColumns)
+        
+
+        self.setLayout(self.Mainlayout) 
+
+    def CloseWindows(self):        
+        time.sleep(0.2)
+        self.close()        
 
 if __name__ == "__main__":	
     app = QApplication(sys.argv)

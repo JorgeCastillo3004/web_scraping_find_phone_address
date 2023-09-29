@@ -368,6 +368,16 @@ list_colums = ['search_name','search_address','name','age','primary_phone'
                        ,'main_address', 'list_phones','past_address', 'status', ]
 
 
+def validate_file_colums(selected_file, regular_columns = ['Owner 1 First Name', 'Owner 1 Last Name', 'City', 'State', 'Zip']):
+    df = pd.read_csv(selected_file)
+    list_files_columns = df.columns
+    list_missed = []
+    
+    for column_name in regular_columns:
+        if not column_name in list_files_columns:
+            list_missed.append(column_name)
+    return list_missed
+            
 def processControl(t, _stop, selected_file, output_file, CatpchaDetected):
     global df, df_all, list_colums, last_row, dict_issues, all_info, key_save
     global name_search, address_search, current_row, flag_click_next, dbase, row
@@ -422,7 +432,7 @@ def processControl(t, _stop, selected_file, output_file, CatpchaDetected):
                 if (t-1)%nsteps == 1:                
                     # print("S-1-",end='')             
                     if not flag_depurate:
-                        name_search, address_search = buildNameAddress(row, 'Owner 1 First Name', 'Owner 1 Last Name', 'City', 'State', 'Zip')                        
+                        name_search, address_search = buildNameAddress(row, 'Owner 1 First Name', 'Owner 1 Last Name', 'City', 'State', 'Zip')
                     flag_click_next = True
 
                 if (t-1)%nsteps == 2:   
