@@ -306,9 +306,9 @@ def optionsConfiguration(flag_load_profile = False):
     # options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
     if flag_load_profile:
         # # Define profile folder, profile number
-        options.add_argument(r"user-data-dir=/home/jorge/.config/google-chrome/")
+        options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
         # Define profile folder, profile number
-        options.add_argument(r"profile-directory=Profile 2")
+        #options.add_argument(r"profile-directory=Profile 2"))
         # launch chrome navigator
 
 def launchNavigator():
