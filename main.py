@@ -4,8 +4,8 @@ import sys
 from datetime import date
 from database import *
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import (
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtWidgets import (
     QApplication,
     QGridLayout,
     QVBoxLayout,
@@ -18,9 +18,9 @@ from PyQt5.QtWidgets import (
     QFormLayout
 )
 
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtCore import *
+from PyQt6.QtWidgets import *
+from PyQt6.QtWidgets import QMessageBox
 
 #### LOAD MODULES ###
 from control import *
@@ -90,12 +90,12 @@ class WindowMain(QWidget):
         self.ButtonSearchByAddress.clicked.connect(self.ExecuteSearchByAddress)
 
         self.showDataBase = QtWidgets.QCheckBox("data base")
-        self.showDataBase.setCheckState(Qt.Checked)
+        self.showDataBase.setCheckState(Qt.CheckState.Checked)
         self.showDataBase.setChecked(True)
         self.showDataBase.stateChanged.connect(self.ExecuteShowDataBase)
 
         self.showCurrentFile = QtWidgets.QCheckBox("Current file")
-        self.showCurrentFile.setCheckState(Qt.Checked)
+        self.showCurrentFile.setCheckState(Qt.CheckState.Checked)
         self.showCurrentFile.stateChanged.connect(self.ExecuteShowCurrentFile)
         self.showCurrentFile.setChecked(False)
         
@@ -234,8 +234,9 @@ class WindowMain(QWidget):
     def ExecuteStop(self): 
         self.ButtonStartPause.setText("Start")
         self.ButtonStop.setChecked(True)
-        self._stop = True
+        self._stop = True        
         Worker._stop = self._stop
+        closeDriver()
 
     def ExecuteRestart(self):         
         Worker._i = 0
@@ -305,11 +306,12 @@ class WindowMain(QWidget):
         self.ButtonSearchByAddress.setChecked(False)    
 
     def ExecuteLoadFile(self):        
-        options = QFileDialog.Options()
-        options |= QFileDialog.ReadOnly
-        file_dialog = QFileDialog()
-        file_dialog.setOptions(options)        
-        self.selected_file, _ = file_dialog.getOpenFileName(self, "Open File", ".csv", "All files (*)")
+        # options = QFileDialog.Options()
+        # options |= QFileDialog.ReadOnly
+        # file_dialog = QFileDialog()
+        # file_dialog.setOptions(options)        
+        # self.selected_file, _ = file_dialog.getOpenFileName(self, "Open File", ".csv", "All files (*)")
+        self.selected_file, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt);;Image Files (*.png *.jpg)")
 
         if self.selected_file:
             self.updateFile.emit()
@@ -323,13 +325,14 @@ class WindowMain(QWidget):
             self.WindowsSelectCheckPoint.show()
 
     def ExecuteExportFile(self):        
-        options = QFileDialog.Options()
-        folder_dialog = QFileDialog()
-        folder_dialog.setOptions(options)
-        folder_dialog.setFileMode(QFileDialog.Directory)
+        # options = QFileDialog.Options()
+        # folder_dialog = QFileDialog()
+        # folder_dialog.setOptions(options)
+        # folder_dialog.setFileMode(QFileDialog.Directory)
 
         # Show the folder dialog and get the selected folder
-        self.export_file_name, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","","All Files (*);;Text Files (*.txt)", options=options)
+        # self.export_file_name, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","","All Files (*);;Text Files (*.txt)", options=options)
+        self.export_file_name, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt);;Image Files (*.png *.jpg)")
         if self.export_file_name:            
             self.updateExportFile.emit()
             self.exportFileFlag = True
@@ -417,10 +420,13 @@ def SetInicio(self):
     self.SideButton.addWidget(self.ButtonRestart)
 
     # CREATE AND ADD VERTICAL SPACER TO LAYER SIDEBUTTONS
-    self.VerticalSpacer = QFrame()
-    self.VerticalSpacer.Shape(QFrame.VLine)
-    self.VerticalSpacer.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Expanding)    
-    self.SideButton.addWidget(self.VerticalSpacer)
+    self.VerticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+    # self.VerticalSpacer = QFrame()
+    # self.VerticalSpacer.Shape(QFrame.VLine)
+    # self.VerticalSpacer.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Expanding)    
+
+    self.SideButton.addItem(self.VerticalSpacer)
+    # self.SideButton.addWidget(self.VerticalSpacer)
 
     # ADD OTHERS LAYOUTS TO THE MAIN LAYOUT
     self.Mainlayout.addLayout(self.FirstButtonlayout)
@@ -452,7 +458,9 @@ class TableUser(QTableWidget):
             for m, item in enumerate(result):
 
                 newitem = QTableWidgetItem(str(item))
-                newitem.setFlags(QtCore.Qt.ItemIsEnabled)                
+                # self.showCurrentFile.setCheckState(Qt.CheckState.Checked)
+                # newitem.setFlags(QtCore.Qt.ItemIsEnabled)
+                newitem.setFlags(newitem.flags() & ~Qt.ItemFlag.ItemIsEnabled)
                 self.setItem( n, m, newitem)
 
         self.setHorizontalHeaderLabels(horHeaders)
@@ -516,6 +524,7 @@ if __name__ == "__main__":
     # window.setCentralWidget (frm)
     # window.resize(340, 440)
     window.show()
-    sys.exit(app.exec_())    
+    # sys.exit(app.exec_())    
+    app.exec()
     closeConection(dbase)
     driver.close()
