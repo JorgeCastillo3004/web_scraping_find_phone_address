@@ -191,8 +191,8 @@ class WindowMain(QWidget):
 
     def ExecuteLaunchNavigator(self):
         Worker.selected_file = self.selected_file        
-        self.loadFileFlag = True
-        self.exportFileFlag = True
+        #self.loadFileFlag = True
+        #self.exportFileFlag = True
         if self.loadFileFlag and self.exportFileFlag:
             try:
                 launchNavigator()
