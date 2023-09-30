@@ -322,10 +322,10 @@ def optionsConfiguration(flag_load_profile = False):
     # options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
     if flag_load_profile:
         # # Define profile folder, profile number
-        # options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1"))
-        options.add_argument(r"user-data-dir=/home/jorge/.config/google-chrome/")
+        options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
+        # options.add_argument(r"user-data-dir=/home/jorge/.config/google-chrome/"))
         # Define profile folder, profile number
-        options.add_argument(r"profile-directory=Profile 6")
+        # options.add_argument(r"profile-directory=Profile 6"))
         # launch chrome navigator
 
 def launchNavigator():
@@ -414,8 +414,8 @@ def processControl(t, _stop, selected_file, output_file, CatpchaDetected):
     global name_search, address_search, flag_click_next, dbase, row
     nsteps = 9
     print('-',end='')
-    output_file = 'salida.csv'
-    selected_file = 'Propwire_Export_230_Properties_Sep 2_2023.csv'
+    # output_file = 'salida.csv'
+    # selected_file = 'Propwire_Export_230_Properties_Sep 2_2023.csv'
     if t == 0:
         # print("T inicial: ", t)
         CatpchaDetected = False        
