@@ -26,11 +26,11 @@ from PyQt6.QtWidgets import QMessageBox
 from control import *
 
 
-# if not os.path.exists('check_points'):
-#     os.mkdir('check_points')
+if not os.path.exists('check_points'):
+    os.mkdir('check_points')
 
-# if not os.path.isfile("check_points/last_row.json"):
-#     saveCheckPoint("check_points/last_row.json", {'last_row':0})
+if not os.path.isfile("check_points/last_row.json"):
+    saveCheckPoint("check_points/last_row.json", {'last_row':0})
 
 class Worker(QtCore.QObject):# BOT OR OBJECT TO BE MANIPULATE
 
