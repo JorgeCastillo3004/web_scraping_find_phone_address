@@ -1,4 +1,5 @@
 import sqlite3
+import os
 
 def createConection():
     dbase = sqlite3.connect("peoplesearch.db")
@@ -34,6 +35,9 @@ def insertNewRegister(dbase, dictdata, filename_):
 	 (name, phone, address, list_phones, past_address, status, filename_))
 	dbase.commit()
 
+if os.path.isfile('peoplesearch.db'):
+	os.remove('peoplesearch.db')
+	
 dbase = createConection()
 createTablePeople(dbase)
 closeConection(dbase)

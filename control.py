@@ -44,7 +44,7 @@ def saveCheckPoint(filename, dictionary):
     with open(filename, "w") as outfile:
         outfile.write(json_object)
 
-def loadCheckPoint(filename):
+def load_check_point(filename):
     # Opening JSON file
     if os.path.isfile(filename):
         with open(filename, 'r') as openfile:        
@@ -52,6 +52,23 @@ def loadCheckPoint(filename):
     else:
         json_object = {}
     return json_object
+
+def search_check_points(filepath, check_point_filename = 'check_points/last_row.json'):
+    file_name = filepath.split('/')[-1]
+    previous_run_flag = False
+    if not os.path.isfile(check_point_filename):
+        last_row_dict = {}
+        row_number = 0      
+    else:
+        last_row_dict = load_check_point(check_point_filename)
+        try:
+            last_row = last_row_dict[file_name]['last_row']
+            row_number = last_row + 1
+            previous_run_flag = True
+        except:
+            previous_run_flag = False
+            row_number = 0
+    return previous_run_flag, last_row_dict, row_number
 
 #########################################################################################
 #                                                                                       #
@@ -122,6 +139,8 @@ def SelectSearch(by_name = True, max_try = 15):
                 flag_wait = False                
 
 def sendSearch(name, address):
+    wait = WebDriverWait(driver, 10)
+    free_search = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'search-form-button-submit.btn.btn-md.btn-primary')))
     input_name = driver.find_element(By.ID, 'search-name-name')
     input_name.clear()
     for character in name:
@@ -135,7 +154,8 @@ def sendSearch(name, address):
         input_address.send_keys(character)
         time.sleep(random.uniform(0.1,0.2))
 
-    free_search  = driver.find_element(By.CLASS_NAME, 'search-form-button-submit.btn.btn-md.btn-primary')
+    # free_search  = driver.find_element(By.CLASS_NAME, 'search-form-button-submit.btn.btn-md.btn-primary')
+
     time.sleep(random.uniform(0.5,1.2))
     free_search.click()
 
@@ -211,7 +231,7 @@ def get_phone_numbers(card_block):
 
 def get_block_results(df_all, selected_file):
 
-    global key_save, all_info, name_search, address_search, dbase
+    global all_info, name_search, address_search, dbase
 
     card_blocks = driver.find_elements(By.CLASS_NAME, 'card-block')
     dict_register = {}
@@ -230,8 +250,6 @@ def get_block_results(df_all, selected_file):
         dict_register.update(dict_address)
 
         dict_register['status'] = 'found'
-        all_info[key_save] = dict_register   
-
         # = ['name','primary_phone','list_phones','main_address','past_address','status']
         for i in dict_register.keys():
             dict_partial_info[i] = [str(dict_register[i])]
@@ -239,11 +257,8 @@ def get_block_results(df_all, selected_file):
         insertNewRegister(dbase, dict_register, selected_file.split('/')[-1])
 
         df = pd.DataFrame.from_dict(dict_partial_info)        
-        df_all = pd.concat([df_all, df])        
-        key_save +=1
-    if len(card_blocks)==0:
-        all_info[key_save] = {'name':name_search,'address':address_search, 'status':'unfound'}
-        key_save +=1
+        df_all = pd.concat([df_all, df])       
+    
     return df_all
 
 def nextPage(max_try = 2):
@@ -258,6 +273,7 @@ def nextPage(max_try = 2):
             for button in paginations:
                 if "NEXT PAGE" in button.tex:
                     button.click()
+                    break
                 if len(paginations)==1 and 'PREVIOUS PAGE' in button.text:
                      flag_continue = False
             flag_click_next = False
@@ -306,15 +322,16 @@ def optionsConfiguration(flag_load_profile = False):
     # options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
     if flag_load_profile:
         # # Define profile folder, profile number
-        options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
+        # options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1"))
+        options.add_argument(r"user-data-dir=/home/jorge/.config/google-chrome/")
         # Define profile folder, profile number
-        #options.add_argument(r"profile-directory=Profile 2"))
+        options.add_argument(r"profile-directory=Profile 6")
         # launch chrome navigator
 
 def launchNavigator():
     global options, driver
     options = webdriver.ChromeOptions()
-    optionsConfiguration(flag_load_profile = False)
+    optionsConfiguration(flag_load_profile = True)
     # options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36")
     # options.add_experimental_option("prefs", {"profile.default_content_setting_values.cookies": 2})
     driver = webdriver.Chrome(options=options)
@@ -345,6 +362,20 @@ def buildNameAddress(row, first_name_, last_name_, city_, state_, zip_):
     address = city_str +' ' + state_str + ' ' + zip_str
     return name, address
 
+def go_back(max_try = 3):
+    try_back = True
+    count = 0
+    while try_back:
+        try: 
+            driver.back()
+            print("--Back--")
+            try_back = False
+        except:
+            time.sleep(0.3)
+            count +=1
+            if count == max_try:
+                try_back = False
+                driver.get('https://www.fastpeoplesearch.com/')
 #########################################################################################
 #                    CHROME OPTIONS CONFIGURATION                                       #
 ######################################################################################### 
@@ -377,120 +408,77 @@ def validate_file_colums(selected_file, regular_columns = ['Owner 1 First Name',
         if not column_name in list_files_columns:
             list_missed.append(column_name)
     return list_missed
-            
+
 def processControl(t, _stop, selected_file, output_file, CatpchaDetected):
-    global df, df_all, list_colums, last_row, dict_issues, all_info, key_save
-    global name_search, address_search, current_row, flag_click_next, dbase, row
-    nsteps = 10
-    flag_depurate = False
+    global df, df_all, list_colums, last_row, dict_issues, all_info, last_row_dict
+    global name_search, address_search, flag_click_next, dbase, row
+    nsteps = 9
     print('-',end='')
+    output_file = 'salida.csv'
+    selected_file = 'Propwire_Export_230_Properties_Sep 2_2023.csv'
     if t == 0:
         # print("T inicial: ", t)
-        CatpchaDetected = False
-        
-        if flag_depurate:
-            df = pd.read_csv('Propwire_Export_230_Properties_Sep 2_2023.csv')
-            df_all = load_file('people_info.csv')
-
-        else:
-            df = pd.read_csv(selected_file)
-            # print("Len df", len(df))
-            df_all = pd.DataFrame()
+        CatpchaDetected = False        
+        df = pd.read_csv(selected_file)        
+        df_all = pd.DataFrame()
 
         # INITIALIZATION LOAD CHECK POINTS AND PREVIOUS FILES.
-        last_row_dict = loadCheckPoint('check_points/last_row.json')
+        previous_run_flag, last_row_dict, last_row = search_check_points(selected_file, check_point_filename = 'check_points/last_row.json')        
+        dict_issues = load_check_point('check_points/issues_row.json')       
 
-        if len(last_row_dict.keys()) == 0:
-            last_row = 0
-        else:
-            last_row= last_row_dict['last_row']
-        
-        dict_issues = loadCheckPoint('check_points/issues_row.json')
-        
-        # print("Start point: ", last_row)
-
-        all_info = loadCheckPoint('people_info.json')
-        if len(all_info.keys()) == 0:
-            key_save = 0
-        else:
-            key_save = int(list(all_info.keys())[-1]) + 1
-        dbase = createConection()
-        # print("Last row: INITIALIZATION", last_row)
-        current_row = t//nsteps + last_row
-        t +=1
-
+        # DataBase connection
+        dbase = createConection()        
+        t +=1        
+    current_row = (t-1)//nsteps + last_row
+    print("t:", t, "Step: ", (t-1)%nsteps," Row: ", current_row + 1 ,'/',len(df))
     if t!=0:
-        CatpchaDetected = detectCatpcha(max_try = 2)
-        # print("-", t, "Step: ",(t-1)%nsteps,end=' ')
-        current_row = (t-1)//nsteps + last_row        
+        CatpchaDetected = detectCatpcha(max_try = 2)                
         # while current_row <= len(df):
         if not CatpchaDetected:
             if (t-1)%nsteps == 0:            
-                row = df.iloc[[current_row]]           
-                
-            try:
-                if (t-1)%nsteps == 1:                
-                    # print("S-1-",end='')             
-                    if not flag_depurate:
-                        name_search, address_search = buildNameAddress(row, 'Owner 1 First Name', 'Owner 1 Last Name', 'City', 'State', 'Zip')
-                    flag_click_next = True
-
-                if (t-1)%nsteps == 2:   
-                    # print("S-2-",end='') 
-                    if not flag_depurate:            
-                        sendSearch(name_search, address_search)
-
-                if (t-1)%nsteps == 3:                
-                    # print("S-3-",end='')
-                    if not flag_depurate:
-                        CatpchaDetected = detectCatpcha(max_try = 2)
-                        if CatpchaDetected:
-                            _stop = True
-
+                row = df.iloc[[current_row]]
+            try:            
+                if (t-1)%nsteps == 1:
+                    name_search, address_search = buildNameAddress(row, 'Owner 1 First Name', 'Owner 1 Last Name', 'City', 'State', 'Zip')
+                    # flag_click_next = True
+                if (t-1)%nsteps == 2:  
+                    sendSearch(name_search, address_search)
+                if (t-1)%nsteps == 3:                    
+                    CatpchaDetected = detectCatpcha(max_try = 2)
+                    if CatpchaDetected:
+                        _stop = True
                 if (t-1)%nsteps == 4:
-                    # print("S-4-",end='')
-                    if not flag_depurate:
-                        wait_results()
-                
+                    wait_results(max_try = 2)                
                 if (t-1)%nsteps >= 5 and (t-1)%nsteps <= 8:
-                    if flag_click_next:
-                        if (t-1)%nsteps == 5:
-                            # print("S-5-",end='')
-                            if not flag_depurate:                      
-                                imitateBehavior(max_tries = 10)                        
+                    # if flag_click_next:
+                    if (t-1)%nsteps == 5:                           
+                        imitateBehavior(max_tries = 10)
+                    if (t-1)%nsteps == 6:
+                        df_all = get_block_results(df_all, selected_file)
+                        df_all[list_colums].to_csv(output_file,index= True)                        
+                    if (t-1)%nsteps == 7:                            
+                        flag_click_next = nextPage(max_try = 2)# Regresar al paso 4                            
+                        if flag_click_next:
+                            print("More pages found: ")
+                            t = t - 4
+                            print("Go back step: 4")
+                if (t-1)%nsteps == 8:
+                    last_row_dict[selected_file.split('/')[-1]] = {'last_row':current_row}                    
+                    saveCheckPoint('check_points/last_row.json', last_row_dict)
 
-                        if (t-1)%nsteps == 6:
-                            # print("S-6-",end='')
-                            if not flag_depurate:
-                                df_all = get_block_results(df_all, selected_file)
-                                df_all[list_colums].to_csv(output_file,index= True)
-
-                        if (t-1)%nsteps == 7:
-                            # print("S-7-",end='')
-                            if not flag_depurate:
-                                saveCheckPoint('people_info.json', all_info)
-
-                        if (t-1)%nsteps == 8:
-                            # print("S-8-",end='')
-                            if not flag_depurate:
-                                flag_click_next = nextPage(max_try = 2)
-                if (t-1)%nsteps == 9:                
-                    # print("S-9-",end='')
-                    if not flag_depurate:
-                        driver.back()
-                        wait_search_box(max_try = 15)
-                        saveCheckPoint('check_points/last_row.json', {'last_row':current_row})
+                    go_back(max_try = 3)
+                    search_box_found  = wait_search_box(max_try = 4)
+                    while not search_box_found:
+                        driver.get('https://www.fastpeoplesearch.com/')
+                        search_box_found  = wait_search_box(max_try = 4)                    
                     if current_row + 1 == len(df):
                         print("Stop last row")
                         _stop = True
                         t = -1
-
+                count_except = 0
             except Exception as e:
-                driver.refresh()
-                time.sleep(2)
-                print("Error exception: ")
-                print(e, "# \n")
-                PrintException()
+                print("Current t: ", t)                
+                t = t - 1
                 CatpchaDetected = detectCatpcha()
                 if CatpchaDetected:
                     _stop = True
@@ -500,9 +488,16 @@ def processControl(t, _stop, selected_file, output_file, CatpchaDetected):
                     saveCheckPoint('check_points/issues_row.json', dict_issues)
                     driver.get('https://www.fastpeoplesearch.com/')
                     time.sleep(3)
-                    # backWaitSearchBox()
-                    _stop = True
-                t = (t-1)%nsteps
-        if not CatpchaDetected:
-            t +=1
+                    
+                count_except += 1
+                if count_except == 3:
+                    t = t - (t-1)%nsteps
+                    driver.get('https://www.fastpeoplesearch.com/')
+                    wait_search_box(max_try = 4)
+                if count_except == 5:
+                    t = t - (t-1)%nsteps + nsteps # pass to next row
+                print("Restart step: ", t)
+            # print("Current Step: ", (t-1)%nsteps, end= '-')
+        # if not CatpchaDetected:
+            t +=1            
     return t, _stop, CatpchaDetected, current_row

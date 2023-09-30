@@ -26,11 +26,11 @@ from PyQt6.QtWidgets import QMessageBox
 from control import *
 
 
-if not os.path.exists('check_points'):
-    os.mkdir('check_points')
+# if not os.path.exists('check_points'):
+#     os.mkdir('check_points')
 
-if not os.path.isfile("check_points/last_row.json"):
-    saveCheckPoint("check_points/last_row.json", {'last_row':0})
+# if not os.path.isfile("check_points/last_row.json"):
+#     saveCheckPoint("check_points/last_row.json", {'last_row':0})
 
 class Worker(QtCore.QObject):# BOT OR OBJECT TO BE MANIPULATE
 
@@ -118,6 +118,7 @@ class WindowMain(QWidget):
 
         self.textLastRow = QtWidgets.QLineEdit()
         self.textLastRow.setFixedSize(150, 25)
+        self.textLastRow.setText('0')
         # self.textLastRow.textChanged.connect(self.ChangetextLastRow)
 
         self.FileNamelabel = QtWidgets.QLabel('File name')
@@ -242,7 +243,9 @@ class WindowMain(QWidget):
     def ExecuteRestart(self):         
         Worker._i = 0
         self.textLastRow.setText('0')
-        saveCheckPoint('check_points/last_row.json', {'last_row':0})
+        self.last_row_dict[self.selected_file.split('/')[-1]] = {'last_row':current_row}
+        # saveCheckPoint('check_points/last_row.json', last_row_dict)
+        saveCheckPoint('check_points/last_row.json', self.last_row_dict)
         self.updateFile.emit()
         # , FileName
         #  if self.TasaBCV.text()!='':
@@ -253,10 +256,9 @@ class WindowMain(QWidget):
 
     ###################   FUNTION TO CONNECT ##################
     def cargarFunct(self):        
-        #-updartetable-
-        last_row_dict = loadCheckPoint('check_points/last_row.json')
-        self.current_row = str(last_row_dict['last_row'])
-        self.textLastRow.setText(self.current_row)
+        #-updartetable-        
+        _,self.last_row_dict, self.current_row = search_check_points(self.selected_file, check_point_filename = 'check_points/last_row.json')
+        self.textLastRow.setText(str(self.current_row))
         self.Table = UpdateTable(self)
         self.Tablelayout.itemAt(1).widget().setParent(None)
         self.Tablelayout.addWidget(self.Table)    
@@ -315,7 +317,9 @@ class WindowMain(QWidget):
         self.selected_file, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*)")
 
         if self.selected_file:
-            self.updateFile.emit()            
+            self.updateFile.emit()
+            _,self.last_row_dict, self.current_row = search_check_points(self.selected_file, check_point_filename = 'check_points/last_row.json')
+            self.textLastRow.setText(str(self.current_row))
             list_missed_columns = validate_file_colums(self.selected_file)
             if len(list_missed_columns) != 0:                
                 self.WindowAlertMissedColumns= WindowAlertMissedColumns()
