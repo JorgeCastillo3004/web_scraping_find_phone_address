@@ -238,7 +238,7 @@ class WindowMain(QWidget):
         self.ButtonStop.setChecked(True)
         self._stop = True        
         Worker._stop = self._stop
-        closeDriver()
+        # closeDriver()
 
     def ExecuteRestart(self):         
         Worker._i = 0
@@ -568,4 +568,7 @@ if __name__ == "__main__":
     # sys.exit(app.exec_())    
     app.exec()
     closeConection(dbase)
-    driver.close()
+    try:
+        driver.close()
+    except:
+        print('Chrome closed')

@@ -238,6 +238,10 @@ def get_block_results(df_all, selected_file):
     dict_register['search_name'] = name_search
     dict_register['search_address'] = address_search
     dict_partial_info = {}
+
+    if len(card_blocks)== 0:
+        print("Unfound registers")
+
     for card_block in card_blocks:
         name, age = get_name_age(card_block)        
         dict_register['name'] = name
@@ -308,33 +312,50 @@ def closeDriver():
     driver.quit()
 ######################################################################################### 
 def optionsConfiguration(flag_load_profile = False):
-    global options
+    global options1, options2
+    options1 = webdriver.ChromeOptions()
     # Adding argument to disable the AutomationControlled flag 
-    options.add_argument("--disable-blink-features=AutomationControlled") 
+    options1.add_argument("--disable-blink-features=AutomationControlled") 
 
     # Exclude the collection of enable-automation switches 
-    options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
+    options1.add_experimental_option("excludeSwitches", ["enable-automation"]) 
 
     # Turn-off userAutomationExtension 
-    options.add_experimental_option("useAutomationExtension", False)    
+    options1.add_experimental_option("useAutomationExtension", False)  
+
+    options2 = webdriver.ChromeOptions()
+    # Adding argument to disable the AutomationControlled flag 
+    options2.add_argument("--disable-blink-features=AutomationControlled") 
+
+    # Exclude the collection of enable-automation switches 
+    options2.add_experimental_option("excludeSwitches", ["enable-automation"]) 
+
+    # Turn-off userAutomationExtension 
+    options2.add_experimental_option("useAutomationExtension", False)    
 
     # Define default profiles folder
     # options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
     if flag_load_profile:
         # # Define profile folder, profile number
         options.add_argument(r"user-data-dir=/Users/mitsonkyjecrois/Library/Application Support/Google/Chrome/Profile 1")
-        # options.add_argument(r"user-data-dir=/home/jorge/.config/google-chrome/"))
+        # options1.add_argument(r"user-data-dir=/home/jorge/.config/google-chrome/")
         # Define profile folder, profile number
-        # options.add_argument(r"profile-directory=Profile 6"))
-        # launch chrome navigator
+        # options1.add_argument(r"profile-directory=Profile 10")        # launch chrome navigator
+
 
 def launchNavigator():
-    global options, driver
-    options = webdriver.ChromeOptions()
+    global options1,options2, driver    
     optionsConfiguration(flag_load_profile = True)
     # options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36")
     # options.add_experimental_option("prefs", {"profile.default_content_setting_values.cookies": 2})
-    driver = webdriver.Chrome(options=options)
+    try:
+        driver = webdriver.Chrome(options=options1)
+    except:
+        try:
+           driver.close() 
+        except:
+            print("There aren't pending navigators to close ")
+        driver = webdriver.Chrome(options=options2)
     # Changing the property of the navigator value for webdriver to undefined     
 
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")  #Error
@@ -411,24 +432,26 @@ def validate_file_colums(selected_file, regular_columns = ['Owner 1 First Name',
 
 def processControl(t, _stop, selected_file, output_file, CatpchaDetected):
     global df, df_all, list_colums, last_row, dict_issues, all_info, last_row_dict
-    global name_search, address_search, flag_click_next, dbase, row
+    global name_search, address_search, flag_click_next, dbase, row, count_except
     nsteps = 9
     print('-',end='')
-    # output_file = 'salida.csv'
-    # selected_file = 'Propwire_Export_230_Properties_Sep 2_2023.csv'
     if t == 0:
         # print("T inicial: ", t)
         CatpchaDetected = False        
         df = pd.read_csv(selected_file)        
-        df_all = pd.DataFrame()
 
         # INITIALIZATION LOAD CHECK POINTS AND PREVIOUS FILES.
         previous_run_flag, last_row_dict, last_row = search_check_points(selected_file, check_point_filename = 'check_points/last_row.json')        
         dict_issues = load_check_point('check_points/issues_row.json')       
+        if previous_run_flag:
+            df_all = pd.read_csv(output_file)
+        else:
+            df_all = pd.DataFrame()
 
         # DataBase connection
         dbase = createConection()        
-        t +=1        
+        t +=1
+        count_except = 0     
     current_row = (t-1)//nsteps + last_row
     print("t:", t, "Step: ", (t-1)%nsteps," Row: ", current_row + 1 ,'/',len(df))
     if t!=0:
@@ -496,7 +519,7 @@ def processControl(t, _stop, selected_file, output_file, CatpchaDetected):
                     wait_search_box(max_try = 4)
                 if count_except == 5:
                     t = t - (t-1)%nsteps + nsteps # pass to next row
-                print("Restart step: ", t)
+                print("t: ", t ,"Restart step: ", (t-1)%nsteps)
             # print("Current Step: ", (t-1)%nsteps, end= '-')
         # if not CatpchaDetected:
             t +=1            
