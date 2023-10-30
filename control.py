@@ -462,7 +462,7 @@ def processControl(t, dict_parameters):
         # print("T inicial: ", t)
         CatpchaDetected = False        
         df = pd.read_csv(dict_parameters['selected_file'])
-        df_all = dict_parameters['previous_registers']        
+        df_all = pd.DataFrame(dict_parameters['previous_registers'])
         # DataBase connection
         # dbase = createConection()  # self.dict_parameter['dbase']
         t +=1
@@ -479,80 +479,80 @@ def processControl(t, dict_parameters):
         if not CatpchaDetected:
             if (t-1)%nsteps == 0:            
                 row = df.iloc[[current_row]]
-            # try:
-            if (t-1)%nsteps == 1:
-                name_search, address_search = build_search_fields(dict_parameters['search_by_name'], row)
-                # flag_click_next = True
-            if (t-1)%nsteps == 2:  
-                sendSearch(name_search, address_search, dict_parameters['search_by_name'])
-            if (t-1)%nsteps == 3:                    
-                CatpchaDetected = detectCatpcha(max_try = 2)
+            try:
+                if (t-1)%nsteps == 1:
+                    name_search, address_search = build_search_fields(dict_parameters['search_by_name'], row)
+                    # flag_click_next = True
+                if (t-1)%nsteps == 2:  
+                    sendSearch(name_search, address_search, dict_parameters['search_by_name'])
+                if (t-1)%nsteps == 3:                    
+                    CatpchaDetected = detectCatpcha(max_try = 2)
+                    if CatpchaDetected:
+                        _stop = True
+                if (t-1)%nsteps == 4:
+                    wait_results(max_try = 2)
+                if (t-1)%nsteps >= 5 and (t-1)%nsteps <= 8:
+                    # if flag_click_next:
+                    if (t-1)%nsteps == 5:                           
+                        imitateBehavior(max_tries = 10)
+                    if (t-1)%nsteps == 6:
+                        df_all = get_block_results(df_all, current_row, dict_parameters)
+                        if len(df_all) != 0:
+                            if dict_parameters['search_by_name']:
+                                list_colums = ['search_name','search_address','name','age','primary_phone'
+                           ,'main_address', 'list_phones','past_address', 'status', ]
+                            else:
+                                list_colums = ['search_address', 'search_address_part2','name','age','primary_phone'
+                           ,'main_address', 'list_phones','past_address', 'status', ]
+                            df_all[list_colums].to_csv(dict_parameters['export_file_name'],index= True)
+                    if (t-1)%nsteps == 7:
+                        flag_click_next = nextPage(max_try = 2)# Regresar al paso 4                            
+                        if flag_click_next:
+                            print("#"*50)
+                            print("More pages found: ")
+                            t = t - 4
+                            print("Go back step: 4")
+                if (t-1)%nsteps == 8:
+                    # last_row_dict[dict_parameters['t'].split('/')[-1]] = {'last_row':current_row}                    
+                    # saveCheckPoint('check_points/last_row.json', last_row_dict)
+
+                    # go_back(max_try = 3)
+                    driver.get('https://www.fastpeoplesearch.com/')
+                    SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15)
+                    search_box_found  = wait_search_box(dict_parameters['search_by_name'], max_try = 4)
+                    while not search_box_found:
+                        driver.get('https://www.fastpeoplesearch.com/')
+                        search_box_found  = wait_search_box(dict_parameters['search_by_name'], max_try = 4)                    
+                    if current_row + 1 == len(df):
+                        print("Stop last row")
+                        _stop = True
+                        t = -1
+                count_except = 0
+            except Exception as e:
+                print("Current t: ", t)                
+                t = t - 1
+                CatpchaDetected = detectCatpcha()
                 if CatpchaDetected:
                     _stop = True
-            if (t-1)%nsteps == 4:
-                wait_results(max_try = 2)
-            if (t-1)%nsteps >= 5 and (t-1)%nsteps <= 8:
-                # if flag_click_next:
-                if (t-1)%nsteps == 5:                           
-                    imitateBehavior(max_tries = 10)
-                if (t-1)%nsteps == 6:
-                    df_all = get_block_results(df_all, current_row, dict_parameters)
-                    if len(df_all) != 0:
-                        if dict_parameters['search_by_name']:
-                            list_colums = ['search_name','search_address','name','age','primary_phone'
-                       ,'main_address', 'list_phones','past_address', 'status', ]
-                        else:
-                            list_colums = ['search_address', 'search_address_part2','name','age','primary_phone'
-                       ,'main_address', 'list_phones','past_address', 'status', ]
-                        df_all[list_colums].to_csv(dict_parameters['export_file_name'],index= True)
-                if (t-1)%nsteps == 7:
-                    flag_click_next = nextPage(max_try = 2)# Regresar al paso 4                            
-                    if flag_click_next:
-                        print("#"*50)
-                        print("More pages found: ")
-                        t = t - 4
-                        print("Go back step: 4")
-            if (t-1)%nsteps == 8:
-                # last_row_dict[dict_parameters['t'].split('/')[-1]] = {'last_row':current_row}                    
-                # saveCheckPoint('check_points/last_row.json', last_row_dict)
-
-                # go_back(max_try = 3)
-                driver.get('https://www.fastpeoplesearch.com/')
-                SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15)
-                search_box_found  = wait_search_box(dict_parameters['search_by_name'], max_try = 4)
-                while not search_box_found:
-                    driver.get('https://www.fastpeoplesearch.com/')
-                    search_box_found  = wait_search_box(dict_parameters['search_by_name'], max_try = 4)                    
-                if current_row + 1 == len(df):
-                    print("Stop last row")
-                    _stop = True
-                    t = -1
-            count_except = 0
-            # except Exception as e:
-            #     print("Current t: ", t)                
-            #     t = t - 1
-            #     CatpchaDetected = detectCatpcha()
-            #     if CatpchaDetected:
-            #         _stop = True
                 
-            #     if not CatpchaDetected:                    
-            #         print("Close aids")
-            #         # try: close aids
-            #         # dict_issues[current_row] = {'name':name_search, 'address':address_search}
-            #         # saveCheckPoint('check_points/issues_row.json', dict_issues)
-            #         # driver.get('https://www.fastpeoplesearch.com/')
-            #         # time.sleep(3)
+                if not CatpchaDetected:                    
+                    print("Close aids")
+                    # try: close aids
+                    # dict_issues[current_row] = {'name':name_search, 'address':address_search}
+                    # saveCheckPoint('check_points/issues_row.json', dict_issues)
+                    # driver.get('https://www.fastpeoplesearch.com/')
+                    # time.sleep(3)
                     
-            #     count_except += 1
-            #     if count_except == 3:
-            #         t = t - (t-1)%nsteps
-            #         driver.get('https://www.fastpeoplesearch.com/')
-            #         SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15)
-            #         wait_search_box(dict_parameters['search_by_name'], max_try = 4)
-            #         count_except = 0
-            #     if count_except == 5:
-            #         t = t - (t-1)%nsteps + nsteps # pass to next row
-            #     print("t: ", t ,"Restart step: ", (t-1)%nsteps)
+                count_except += 1
+                if count_except == 3:
+                    t = t - (t-1)%nsteps
+                    driver.get('https://www.fastpeoplesearch.com/')
+                    SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15)
+                    wait_search_box(dict_parameters['search_by_name'], max_try = 4)
+                    count_except = 0
+                if count_except == 5:
+                    t = t - (t-1)%nsteps + nsteps # pass to next row
+                print("t: ", t ,"Restart step: ", (t-1)%nsteps)
 
             t +=1            
     return t, _stop, CatpchaDetected, current_row
