@@ -48,12 +48,14 @@ def getLastRow(dbase, filename_):
 	else:
 		return 0
 
+def deltePreviosRegister(dbase, filename_):
+	delete_query = "DELETE FROM people WHERE filename = '{}'".format(filename_)
+	dbase.execute(delete_query)
 # if os.path.isfile('peoplesearch.db'):
 # 	os.remove('peoplesearch.db')
 	
 dbase = createConection()
 createTablePeople(dbase)
-
 
 # current_row = 5
 # dictdata = {'name':'George cast', 'primary_phone':'04257366257', 'main_address':'Merida Venezuela',
@@ -61,9 +63,14 @@ createTablePeople(dbase)
 
 # insertNewRegister(dbase, dictdata, 'file2.csv')
 
+
+# deltePreviosRegister(dbase, "Address_list.csv")
+# last_row = getLastRow(dbase,"Address_list.csv")
+# print("last_row", last_row)
 # results = getPreviousRegisters_all(dbase, 'Address_list.csv')
 
 # print("results")
+# print(results)
 # print(len(results))
 # print(type(results))
 

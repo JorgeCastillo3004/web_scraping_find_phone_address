@@ -229,7 +229,7 @@ class WindowMain(QWidget):
                 self._stop = False
                 # Worker._stop = self._stop
                 # Worker._stop = self.search_by_name
-                self.worker.dict_parameter = self.dict_parameter
+                self.worker.dict_parameter = self.dict_parameter                
                 self.cargarSignal.emit()
                 flag_block = False
 
@@ -307,17 +307,19 @@ class WindowMain(QWidget):
         self.ButtonSearchByName.setChecked(True)
         self.ButtonSearchByAddress.setChecked(False)        
         self.dict_parameter['search_by_name'] = True
+        self.loadFileFlag = False
 
     def ExecuteSearchByAddress(self):
         self.ButtonSearchByAddress.setChecked(True)
         self.ButtonSearchByName.setChecked(False)
         self.dict_parameter['search_by_name'] = False
+        self.loadFileFlag = False
 
     def ExecuteLoadFile(self):
         selected_file, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*)")
         self.dict_parameter['selected_file'] = selected_file
         if selected_file:
-            self.loadFileFlag = True            
+            self.loadFileFlag = True
             self.updateFile.emit()
             # _,self.last_row_dict, self.current_row = search_check_points(self.selected_file, check_point_filename = 'check_points/last_row.json')
             previous_registers = getPreviousRegisters_all(self.dbase, selected_file.split('/')[-1])
@@ -333,6 +335,8 @@ class WindowMain(QWidget):
                 if len(previous_registers)!= 0:        
                     self.WindowsSelectCheckPoint = WindowsSelectCheckPoint()
                     self.WindowsSelectCheckPoint.previous_registers = previous_registers
+                    self.WindowsSelectCheckPoint.selected_file = self.dict_parameter['selected_file'].split('/')[-1]
+                    self.WindowsSelectCheckPoint.dbase = self.dbase
                     self.WindowsSelectCheckPoint.setcheckpoint.connect(self.ExecuteSetCheckPoint)
                     self.WindowsSelectCheckPoint.show()
                 else:                    
@@ -350,9 +354,8 @@ class WindowMain(QWidget):
         self.FileName.setText(self.dict_parameter['selected_file'].split('/')[-1])
 
     def ExecuteSetCheckPoint(self):        
-        self.dict_parameter['previous_registers']= pd.DataFrame(self.WindowsSelectCheckPoint.previous_registers)
-        last_row = getLastRow(self.dbase, self.dict_parameter['selected_file'].split('/')[-1])
-        self.dict_parameter['last_row'] = last_row
+        self.dict_parameter['previous_registers']= pd.DataFrame(getPreviousRegisters_all(self.dbase, self.dict_parameter['selected_file'].split('/')[-1]))        
+        self.dict_parameter['last_row'] = getLastRow(self.dbase, self.dict_parameter['selected_file'].split('/')[-1])        
         self.textLastRow.setText(str(self.dict_parameter['last_row']))
 
 def UpdateTable(self):    
@@ -511,14 +514,17 @@ class WindowsSelectCheckPoint(QWidget):
 
         self.setLayout(self.Mainlayout) 
 
-    def setContinue(self):        
+    def setContinue(self):
+        print("Continue")
         time.sleep(0.2)
         self.close()        
         self.setcheckpoint.emit()
 
-    def setRestart(self):        
+    def setRestart(self):
+        print("Restar")
         time.sleep(0.2)
-        self.close()        
+        self.close()
+        deltePreviosRegister(self.dbase, self.selected_file)        
         self.previous_registers = pd.DataFrame()
         self.setcheckpoint.emit()
 
