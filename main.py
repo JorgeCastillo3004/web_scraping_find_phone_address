@@ -42,10 +42,12 @@ class Worker(QtCore.QObject):# BOT OR OBJECT TO BE MANIPULATE
         self._i = 0
         self._stop = False
         self.captcha_flag = False
+        self.search_by_name = True
+        self.current_row = 0
     # ACTION OR PROCCESS TO MANIPULATE START OR STOP
     def activateFunction(self):
         def incAndEmit():
-            self._i, self._stop, self.captcha_flag, self.current_row = processControl(self._i, self._stop, self.selected_file, self.export_file_name, self.captcha_flag)            
+            self._i, self._stop, self.captcha_flag, self.current_row = processControl(self._i, self.dict_parameter)
             if self.captcha_flag:                
                 self._stop = True
                 self.solveCaptchaSignal.emit(self)
@@ -57,13 +59,12 @@ class WindowMain(QWidget):
 
     cargarSignal = QtCore.pyqtSignal() # TO CONNECT WITHO OTHER PROCCESS OR OBJEC
     updateFile = QtCore.pyqtSignal() 
-    updateExportFile = QtCore.pyqtSignal() 
+    # updateExportFile = QtCore.pyqtSignal() 
 
     def __init__(self):
         super().__init__()
         # INICIALIZACION DE VENTANA ACTUAL
         self.fecha = date.today().strftime("%d/%m/%Y")        
-        self.selected_file = ''
         ############### Creacion de botones y elementos asociacion con funciones #################        
         
         # LAUNCH NAVIGATOR
@@ -91,18 +92,19 @@ class WindowMain(QWidget):
 
         self.showDataBase = QtWidgets.QCheckBox("data base")
         self.showDataBase.setCheckState(Qt.CheckState.Checked)
-        self.showDataBase.setChecked(True)
+        self.showDataBase.setChecked(False)
         self.showDataBase.stateChanged.connect(self.ExecuteShowDataBase)
 
         self.showCurrentFile = QtWidgets.QCheckBox("Current file")
         self.showCurrentFile.setCheckState(Qt.CheckState.Checked)
         self.showCurrentFile.stateChanged.connect(self.ExecuteShowCurrentFile)
-        self.showCurrentFile.setChecked(False)
+        self.showCurrentFile.setChecked(True)
         
 
         self.ButtonSearchByName = QtWidgets.QPushButton('Name')
         self.ButtonSearchByName.setFixedSize(150, 25)
         self.ButtonSearchByName.setCheckable(True)
+        self.ButtonSearchByName.setChecked(True)
         self.ButtonSearchByName.clicked.connect(self.ExecuteSearchByName)
 
         self.ButtonLoadFile = QtWidgets.QPushButton('Load File')
@@ -153,49 +155,51 @@ class WindowMain(QWidget):
         self.ButtonRestart.setCheckable(True)
         self.ButtonRestart.clicked.connect(self.ExecuteRestart)
 
-        # self.selected_file = '*'
-        self.dbase = createConection()
-        self.Table = UpdateTable(self)
-
-        SetInicio(self)
-
-        ############## SECTION PROCESS CONTROL ###################
-        worker = Worker()
-        thread = QtCore.QThread()
-
-        self.cargarSignal.connect(worker.activateFunction)  ###     LOAD INFO TO SECOND CLASS ###
-        self.updateFile.connect(self.ExecuteUploadFile)
-        self.updateExportFile.connect(self.ExecuteUploadExportFile)
-        worker.descargarSignal.connect(self.cargarFunct)
-        #-updartetable-
-        worker.solveCaptchaSignal.connect(self.alertSolveCaptcha)
-
-        Worker.selected_file = self.selected_file
-        Worker.export_file_name = ''
-        # self.retrieve.connect(worker.onRetrieve)
-        # worker.retrieved.connect(self.onRetrieved)
-        worker.moveToThread(thread)
-        thread.start()
-
-        self._thread = thread # protect from destroying by gc
-        self._worker = worker # protect from destroying by gc
-
         #############################################################
         #                   SETTINGS INITIAL FLAGS                  #
         #############################################################
         self.launchNavigatorFlag = False
         self.loadFileFlag = False
         self.exportFileFlag = False
-        self._stop = True
+        self._stop = True        
+        self.dbase = createConection()
+        self.dict_parameter = {'dbase':self.dbase}
+        self.dict_parameter['search_by_name'] = True
+        self.dict_parameter['selected_file'] = ''
+        
+        self.Table = UpdateTable(self)
+
+        SetInicio(self)
+
+        ############## SECTION PROCESS CONTROL ###################
+        self.worker = Worker()
+        thread = QtCore.QThread()
+
+        self.cargarSignal.connect(self.worker.activateFunction)  ###     LOAD INFO TO SECOND CLASS ###
+        self.updateFile.connect(self.ExecuteUploadFile)
+        # self.updateExportFile.connect(self.ExecuteUploadExportFile)
+        self.worker.descargarSignal.connect(self.cargarFunct)
+        #-updartetable-
+        self.worker.solveCaptchaSignal.connect(self.alertSolveCaptcha)
+
+        # Worker.selected_file = self.selected_file
+        # Worker.export_file_name = ''
+        # self.retrieve.connect(worker.onRetrieve)
+        # worker.retrieved.connect(self.onRetrieved)
+        self.worker.moveToThread(thread)
+        thread.start()
+
+        self._thread = thread # protect from destroying by gc
+        self._worker = self.worker # protect from destroying by gc
 
 
     def ExecuteLaunchNavigator(self):
-        Worker.selected_file = self.selected_file        
+        # Worker.selected_file = self.selected_file        
         #self.loadFileFlag = True
-        #self.exportFileFlag = True
+        #self.exportFileFlag = True        
         if self.loadFileFlag and self.exportFileFlag:
             try:
-                launchNavigator()
+                launchNavigator(load_profile = False, search_by_name = self.dict_parameter['search_by_name'])
                 self.launchNavigatorFlag = True
             except:
                 QMessageBox.about(self, "Error", "Please close all Chrome windows")
@@ -216,14 +220,16 @@ class WindowMain(QWidget):
         else: 
             QMessageBox.about(self, "Error", 'Please first push button "Launch Naviagtor"')       
 
-    def ExecuteStartPause(self):        
+    def ExecuteStartPause(self):
         if self.launchNavigatorFlag:
             flag_block = True
             if self._stop and flag_block:                
                 self.ButtonStartPause.setText("Pause") 
                 self.ButtonStop.setChecked(False)    
                 self._stop = False
-                Worker._stop = self._stop
+                # Worker._stop = self._stop
+                # Worker._stop = self.search_by_name
+                self.worker.dict_parameter = self.dict_parameter
                 self.cargarSignal.emit()
                 flag_block = False
 
@@ -243,25 +249,22 @@ class WindowMain(QWidget):
     def ExecuteRestart(self):         
         Worker._i = 0
         self.textLastRow.setText('0')
-        self.last_row_dict[self.selected_file.split('/')[-1]] = {'last_row':current_row}
-        # saveCheckPoint('check_points/last_row.json', last_row_dict)
+        self.last_row_dict[self.selected_file.split('/')[-1]] = {'last_row':0}        
         saveCheckPoint('check_points/last_row.json', self.last_row_dict)
         self.updateFile.emit()
-        # , FileName
-        #  if self.TasaBCV.text()!='':
-        #     SetInicio(self)
-        #     ButtonActionInicio(self)
-        # else:
-        #     QMessageBox.about(self, "Error", "Ingrese tasa de cambio valida")
 
     ###################   FUNTION TO CONNECT ##################
     def cargarFunct(self):        
         #-updartetable-        
-        _,self.last_row_dict, self.current_row = search_check_points(self.selected_file, check_point_filename = 'check_points/last_row.json')
-        self.textLastRow.setText(str(self.current_row))
+        # _,self.last_row_dict, self.current_row = search_check_points(self.selected_file, check_point_filename = 'check_points/last_row.json')
+        
+        self.textLastRow.setText(str(self.worker.current_row))
         self.Table = UpdateTable(self)
         self.Tablelayout.itemAt(1).widget().setParent(None)
-        self.Tablelayout.addWidget(self.Table)    
+        self.Tablelayout.addWidget(self.Table)
+        # check stop update
+        if self.worker._stop:
+            self._stop = self.worker._stop
         # process data
         if self._stop:
             # self._stop = _stop            
@@ -284,10 +287,6 @@ class WindowMain(QWidget):
         self.alertWindows.close()
         self.cargarSignal.emit()
 
-    def ExecuteSearchByAddress(self):
-        self.ButtonSearchByAddress.setChecked(True)
-        self.ButtonSearchByName.setChecked(False)
-
     def ExecuteShowDataBase(self):        
         
         if self.showDataBase.isChecked():
@@ -306,71 +305,62 @@ class WindowMain(QWidget):
 
     def ExecuteSearchByName(self):
         self.ButtonSearchByName.setChecked(True)
-        self.ButtonSearchByAddress.setChecked(False)    
+        self.ButtonSearchByAddress.setChecked(False)        
+        self.dict_parameter['search_by_name'] = True
 
-    def ExecuteLoadFile(self):        
-        # options = QFileDialog.Options()
-        # options |= QFileDialog.ReadOnly
-        # file_dialog = QFileDialog()
-        # file_dialog.setOptions(options)        
-        # self.selected_file, _ = file_dialog.getOpenFileName(self, "Open File", ".csv", "All files (*)")
-        self.selected_file, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*)")
+    def ExecuteSearchByAddress(self):
+        self.ButtonSearchByAddress.setChecked(True)
+        self.ButtonSearchByName.setChecked(False)
+        self.dict_parameter['search_by_name'] = False
 
-        if self.selected_file:
+    def ExecuteLoadFile(self):
+        selected_file, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*)")
+        self.dict_parameter['selected_file'] = selected_file
+        if selected_file:
+            self.loadFileFlag = True            
             self.updateFile.emit()
-            _,self.last_row_dict, self.current_row = search_check_points(self.selected_file, check_point_filename = 'check_points/last_row.json')
-            self.textLastRow.setText(str(self.current_row))
-            list_missed_columns = validate_file_colums(self.selected_file)
+            # _,self.last_row_dict, self.current_row = search_check_points(self.selected_file, check_point_filename = 'check_points/last_row.json')
+            previous_registers = getPreviousRegisters_all(self.dbase, selected_file.split('/')[-1])
+            
+
+            list_missed_columns = validate_file_colums(selected_file, self.dict_parameter['search_by_name'])
             if len(list_missed_columns) != 0:                
                 self.WindowAlertMissedColumns= WindowAlertMissedColumns()
                 self.WindowAlertMissedColumns.missedcolumns = "Missed columns: "+ str(' ,'.join(list_missed_columns))
                 print(self.WindowAlertMissedColumns.missedcolumns)
                 self.WindowAlertMissedColumns.show()
             else:
-                self.loadFileFlag = True
+                if len(previous_registers)!= 0:        
+                    self.WindowsSelectCheckPoint = WindowsSelectCheckPoint()
+                    self.WindowsSelectCheckPoint.previous_registers = previous_registers
+                    self.WindowsSelectCheckPoint.setcheckpoint.connect(self.ExecuteSetCheckPoint)
+                    self.WindowsSelectCheckPoint.show()
+                else:                    
+                    self.dict_parameter['previous_registers'] = previous_registers
+                    self.dict_parameter['last_row'] = 0
 
-        previous_registers = getPeopleContactByFile(self.dbase, self.selected_file)        
-        if len(previous_registers)!=0:        
-            self.WindowsSelectCheckPoint= WindowsSelectCheckPoint()
-            self.WindowsSelectCheckPoint.last_row = len(previous_registers)
-            self.WindowsSelectCheckPoint.setcheckpoint.connect(self.ExecuteSetCheckPoint)
-            self.WindowsSelectCheckPoint.show()
-
-    def ExecuteExportFile(self):        
-        # options = QFileDialog.Options()
-        # folder_dialog = QFileDialog()
-        # folder_dialog.setOptions(options)
-        # folder_dialog.setFileMode(QFileDialog.Directory)
-
-        # Show the folder dialog and get the selected folder
-        # self.export_file_name, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","","All Files (*);;Text Files (*.txt)", options=options)
-        # self.export_file_name, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt);;Image Files (*.png *.jpg)")
-        self.export_file_name, _ = QFileDialog.getSaveFileName(self, "Save File", "", "All Files (*)")
-
-        if self.export_file_name:            
-            self.updateExportFile.emit()
+    def ExecuteExportFile(self):
+        export_file_name, _ = QFileDialog.getSaveFileName(self, "Save File", "", "All Files (*)")
+        self.dict_parameter['export_file_name'] = export_file_name
+        if export_file_name:
             self.exportFileFlag = True
+            print("Path to export selected: ")
 
-    def ExecuteUploadFile(self):        
-        Worker.selected_file = self.selected_file
-        self.FileName.setText(self.selected_file.split('/')[-1])
-        # Worker._i = 0
+    def ExecuteUploadFile(self):
+        self.FileName.setText(self.dict_parameter['selected_file'].split('/')[-1])
 
-    def ExecuteUploadExportFile(self):
-        
-        Worker.export_file_name = self.export_file_name
-        # Worker._i = 0
-
-    def ExecuteSetCheckPoint(self):
-        self.textLastRow = str(self.WindowsSelectCheckPoint.last_row)
+    def ExecuteSetCheckPoint(self):        
+        self.dict_parameter['previous_registers']= pd.DataFrame(self.WindowsSelectCheckPoint.previous_registers)
+        last_row = getLastRow(self.dbase, self.dict_parameter['selected_file'].split('/')[-1])
+        self.dict_parameter['last_row'] = last_row
+        self.textLastRow.setText(str(self.dict_parameter['last_row']))
 
 def UpdateTable(self):    
     if self.showDataBase.isChecked():        
         results = getPeopleContact(self.dbase)
 
-    if self.showCurrentFile.isChecked():        
-        results = getPeopleContactByFile(self.dbase, self.selected_file.split('/')[-1])
-
+    if self.showCurrentFile.isChecked():
+        results = getPreviousRegisters_all(self.dbase, self.dict_parameter['selected_file'].split('/')[-1])    
     nrows = len(results)
     self.Table = TableUser(results, nrows, 3)
     return self.Table
@@ -453,7 +443,7 @@ def SetInicio(self):
 class TableUser(QTableWidget):
     def __init__(self, results, *args):
         QTableWidget.__init__(self, *args)        
-        self.results = results
+        self.results = results        
         self.setData()
         # self.resizeColumnsToContents()
         self.resizeRowsToContents()
@@ -467,7 +457,7 @@ class TableUser(QTableWidget):
         self.setColumnWidth(1, 180)
         self.setColumnWidth(2, 250)
         
-        for n, result in enumerate(self.results):
+        for n, result in enumerate(self.results):            
 
             for m, item in enumerate(result):
 
@@ -524,13 +514,13 @@ class WindowsSelectCheckPoint(QWidget):
     def setContinue(self):        
         time.sleep(0.2)
         self.close()        
-        self.setcheckpoint.emit(self)
+        self.setcheckpoint.emit()
 
     def setRestart(self):        
         time.sleep(0.2)
-        self.close()
-        self.last_row = 0
-        self.setcheckpoint.emit(self)
+        self.close()        
+        self.previous_registers = pd.DataFrame()
+        self.setcheckpoint.emit()
 
 class WindowAlertMissedColumns(QWidget):
     # reactivateSignal = pyqtSignal()
