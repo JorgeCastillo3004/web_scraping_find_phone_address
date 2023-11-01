@@ -61,8 +61,9 @@ current_row = 5
 dictdata = {'name':'George cast', 'primary_phone':'04257366257', 'main_address':'Merida Venezuela',
   			'list_phones': '', 'past_address':'', 'current_row':current_row, 'status':'found'}
 
+print("Inser new register")
 insertNewRegister(dbase, dictdata, 'file2.csv')
-
+print("done")
 
 # deltePreviosRegister(dbase, "Address_list.csv")
 # last_row = getLastRow(dbase,"Address_list.csv")
