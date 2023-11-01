@@ -57,11 +57,11 @@ def deltePreviosRegister(dbase, filename_):
 dbase = createConection()
 createTablePeople(dbase)
 
-# current_row = 5
-# dictdata = {'name':'George cast', 'primary_phone':'04257366257', 'main_address':'Merida Venezuela',
-#  			'list_phones': '', 'past_address':'', 'current_row':current_row, 'status':'found'}
+current_row = 5
+dictdata = {'name':'George cast', 'primary_phone':'04257366257', 'main_address':'Merida Venezuela',
+  			'list_phones': '', 'past_address':'', 'current_row':current_row, 'status':'found'}
 
-# insertNewRegister(dbase, dictdata, 'file2.csv')
+insertNewRegister(dbase, dictdata, 'file2.csv')
 
 
 # deltePreviosRegister(dbase, "Address_list.csv")
