@@ -53,17 +53,23 @@ def deltePreviosRegister(dbase, filename_):
 	dbase.execute(delete_query)
 # if os.path.isfile('peoplesearch.db'):
 # 	os.remove('peoplesearch.db')
-	
+
+def show_columns(dbase):
+	columns = dbase.execute("PRAGMA table_info(people)").fetchall()
+	print(columns)
+
 dbase = createConection()
 createTablePeople(dbase)
 
-current_row = 5
-dictdata = {'name':'George cast', 'primary_phone':'04257366257', 'main_address':'Merida Venezuela',
-  			'list_phones': '', 'past_address':'', 'current_row':current_row, 'status':'found'}
+# current_row = 5
+# dictdata = {'name':'George cast', 'primary_phone':'04257366257', 'main_address':'Merida Venezuela',
+#   			'list_phones': '', 'past_address':'', 'current_row':current_row, 'status':'found'}
 
-print("Inser new register")
-insertNewRegister(dbase, dictdata, 'file2.csv')
-print("done")
+# print("Inser new register")
+# insertNewRegister(dbase, dictdata, 'file2.csv')
+# print("done")
+
+# show_columns(dbase)
 
 # deltePreviosRegister(dbase, "Address_list.csv")
 # last_row = getLastRow(dbase,"Address_list.csv")
@@ -85,7 +91,4 @@ print("done")
 # last_row = getLastRow(dbase, 'file2.csv')
 
 # print(last_row, type(last_row))
-
-
-
 closeConection(dbase)
