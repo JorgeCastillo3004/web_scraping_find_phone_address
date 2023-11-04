@@ -671,6 +671,8 @@ class WindowsFilterResults(QWidget):
         # Make filtered
         self.df_filtered = self.df[self.cond1 & self.cond2 & self.cond3 & self.cond4]
         print("The resulted file contain: {} Total rows".format(len(self.df_filtered)))
+        
+        QMessageBox.about(self, "Filtered results ", "Total results {}".format(len(self.df_filtered)))
 
     def ExecuteExportFile(self):
         print("Make filter")        
