@@ -10,8 +10,12 @@ def closeConection(dbase):
     dbase.close()
 
 def createTablePeople(dbase):
-	dbase.execute('''CREATE TABLE IF NOT EXISTS people (name TEXT, phone TEXT,
-	  				address TEXT, list_phones TEXT, past_address TEXT, status TEXT, filename TEXT, current_row INT)''')
+	# dbase.execute('''CREATE TABLE IF NOT EXISTS people (name TEXT, phone TEXT,
+	#   				address TEXT, list_phones TEXT, past_address TEXT, status TEXT, filename TEXT, current_row INT)''')
+
+	dbase.execute('''CREATE TABLE IF NOT EXISTS people (search_name TEXT, search_address TEXT,  search_city TEXT,
+	  search_state TEXT, search_zip TEXT, address TEXT, city TEXT,  state TEXT,  zip TEXT, name TEXT, age TEXT,
+	   phone TEXT,list_phones TEXT,	past_address TEXT, status TEXT, filename TEXT, current_row INT)''')
 
 def getPeopleContact(dbase):
 	data = dbase.execute("SELECT name, phone, address FROM people")
@@ -19,23 +23,39 @@ def getPeopleContact(dbase):
 	return result
 
 def insertNewRegister(dbase, dictdata, filename_):
+	search_name = dictdata['search_name']
+	search_address = dictdata['search_address']
+	search_city = dictdata['search_city']
+	search_state = dictdata['search_state']
+	search_zip = str(dictdata['search_zip'])
+	address = dictdata['main_address']
+	city = dictdata['city']
+	state = dictdata['state']
+	zip_ = dictdata['zip']
 	name = dictdata['name']
-	phone = dictdata['primary_phone']	
-	address = dictdata['main_address']		
+	age = dictdata['age']
+	phone = dictdata['primary_phone']
 	list_phones = str(dictdata['list_phones'])
 	past_address = str(dictdata['past_address'])
-	status = dictdata['status']
+	status = dictdata['status']	
 	current_row = dictdata['current_row']
 
-	dbase.execute(''' INSERT INTO people (name, phone, address, list_phones, past_address, status,filename, current_row) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-	 (name, phone, address, list_phones, past_address, status, filename_, current_row))
+	dbase.execute(''' INSERT INTO people (search_name, search_address, search_city, search_state, search_zip, address,
+		 city, state, zip, name, age, phone, list_phones, past_address, status, filename, current_row) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+		 (search_name, search_address, search_city, search_state, search_zip, address, city, state, zip_,
+		  name, age, phone, list_phones, past_address, status, filename_, current_row))
 	dbase.commit()
 
 def getPreviousRegisters(dbase, filename_):
 	data = dbase.execute("SELECT name, phone, address FROM people WHERE filename =='{}'".format(filename_))
 	#data = dbase.execute("SELECT * FROM people WHERE filename =='{}'".format(filename_))	
 	return data.fetchall()
-	
+
+def getAllInfoPeopleContact(dbase):
+	data = dbase.execute("SELECT * FROM people")
+	result = data.fetchall()    
+	return result
+
 def getPreviousRegisters_all(dbase, filename_):
 	previous_registers = dbase.execute("SELECT * FROM people WHERE filename == '{}'".format(filename_))
 	return previous_registers.fetchall()
@@ -48,7 +68,7 @@ def getLastRow(dbase, filename_):
 	else:
 		return 0
 
-def deltePreviosRegister(dbase, filename_):
+def deletePreviosRegister(dbase, filename_):
 	delete_query = "DELETE FROM people WHERE filename = '{}'".format(filename_)
 	dbase.execute(delete_query)
 # if os.path.isfile('peoplesearch.db'):
@@ -56,39 +76,40 @@ def deltePreviosRegister(dbase, filename_):
 
 def show_columns(dbase):
 	columns = dbase.execute("PRAGMA table_info(people)").fetchall()
-	print(columns)
+	columns = [column[1] for column in columns]
+	return columns
+
+def get_unique_files_names(dbase):
+	query = f'SELECT DISTINCT filename FROM people;'
+	return dbase.execute(query).fetchall()
 
 dbase = createConection()
 createTablePeople(dbase)
-
+# columns = show_columns(dbase)
+# print("columns: ", columns)
+# show_columns(dbase)
 # current_row = 5
 # dictdata = {'name':'George cast', 'primary_phone':'04257366257', 'main_address':'Merida Venezuela',
 #   			'list_phones': '', 'past_address':'', 'current_row':current_row, 'status':'found'}
-
 # print("Inser new register")
 # insertNewRegister(dbase, dictdata, 'file2.csv')
-# print("done")
-
 # show_columns(dbase)
 
-# deltePreviosRegister(dbase, "Address_list.csv")
+# deletePreviosRegister(dbase, "Address_list.csv")
 # last_row = getLastRow(dbase,"Address_list.csv")
 # print("last_row", last_row)
-# results = getPreviousRegisters_all(dbase, 'Address_list.csv')
 
-# print("results")
-# print(results)
-# print(len(results))
-# print(type(results))
+# deletePreviosRegister(dbase, ' Address_list.csv ')
 
-# print('\n')
+results = getPreviousRegisters_all(dbase, 'Address_list.csv')
+print(len(results))
+
+uniquefiles = get_unique_files_names(dbase)
+print("List of files: ", len(uniquefiles))
+for file in uniquefiles:
+	print(file)
+# results.to_csv("datatest.csv")
 # for line in results:
-# 	print('#', line, '#')
-	# for cell in line:
-	# 	print(cell)
-# print(results)
-
-# last_row = getLastRow(dbase, 'file2.csv')
-
+# 	print(line)
 # print(last_row, type(last_row))
 closeConection(dbase)

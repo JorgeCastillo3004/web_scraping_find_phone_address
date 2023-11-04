@@ -69,24 +69,24 @@ class WindowMain(QWidget):
         
         # LAUNCH NAVIGATOR
         self.ButtonLaunchNavigator = QtWidgets.QPushButton('Launch Navigator')
-        self.ButtonLaunchNavigator.setFixedSize(150, 25)        
+        self.ButtonLaunchNavigator.setFixedSize(120, 25)        
         self.ButtonLaunchNavigator.clicked.connect(self.ExecuteLaunchNavigator)
 
         self.ButtonQuitNavigator = QtWidgets.QPushButton('Quit')
-        self.ButtonQuitNavigator.setFixedSize(150, 25)        
+        self.ButtonQuitNavigator.setFixedSize(80, 25)        
         self.ButtonQuitNavigator.clicked.connect(self.ExecuteQuitNavigator)
 
-        self.ButtonSelectWebSite = QtWidgets.QComboBox()        
-        self.ButtonSelectWebSite.setFixedSize(180, 25)
-        self.ButtonSelectWebSite.setObjectName("websites")        
+        # self.ButtonSelectWebSite = QtWidgets.QComboBox()        
+        # self.ButtonSelectWebSite.setFixedSize(180, 25)
+        # self.ButtonSelectWebSite.setObjectName("websites")        
         
-        self.ButtonSelectWebSite.addItem("Fast People Search")
-        self.ButtonSelectWebSite.addItem("All sites -not available-")
-        self.ButtonSelectWebSite.addItem("True People Search -not available-")
-        self.ButtonSelectWebSite.addItem("Spokeo -not available-")        
+        # self.ButtonSelectWebSite.addItem("Fast People Search")
+        # self.ButtonSelectWebSite.addItem("All sites -not available-")
+        # self.ButtonSelectWebSite.addItem("True People Search -not available-")
+        # self.ButtonSelectWebSite.addItem("Spokeo -not available-")        
 
         self.ButtonSearchByAddress = QtWidgets.QPushButton('Address')
-        self.ButtonSearchByAddress.setFixedSize(150, 25)
+        self.ButtonSearchByAddress.setFixedSize(80, 25)
         self.ButtonSearchByAddress.setCheckable(True)
         self.ButtonSearchByAddress.clicked.connect(self.ExecuteSearchByAddress)
 
@@ -102,36 +102,40 @@ class WindowMain(QWidget):
         
 
         self.ButtonSearchByName = QtWidgets.QPushButton('Name')
-        self.ButtonSearchByName.setFixedSize(150, 25)
+        self.ButtonSearchByName.setFixedSize(80, 25)
         self.ButtonSearchByName.setCheckable(True)
         self.ButtonSearchByName.setChecked(True)
         self.ButtonSearchByName.clicked.connect(self.ExecuteSearchByName)
 
         self.ButtonLoadFile = QtWidgets.QPushButton('Load File')
-        self.ButtonLoadFile.setFixedSize(150, 25)        
+        self.ButtonLoadFile.setFixedSize(80, 25)        
         self.ButtonLoadFile.clicked.connect(self.ExecuteLoadFile)
 
         self.ButtonExportFile = QtWidgets.QPushButton('Export File')
-        self.ButtonExportFile.setFixedSize(150, 25)        
+        self.ButtonExportFile.setFixedSize(80, 25)        
         self.ButtonExportFile.clicked.connect(self.ExecuteExportFile)
 
+        self.ButtonFilterResults = QtWidgets.QPushButton('Filter')
+        self.ButtonFilterResults.setFixedSize(80, 25)        
+        self.ButtonFilterResults.clicked.connect(self.ExecuteFilterResults)
+
         self.rowlabel = QtWidgets.QLabel('Last row')
-        self.rowlabel.setFixedSize(250, 25)
+        self.rowlabel.setFixedSize(220, 25)
 
         self.textLastRow = QtWidgets.QLineEdit()
-        self.textLastRow.setFixedSize(150, 25)
+        self.textLastRow.setFixedSize(120, 25)
         self.textLastRow.setText('0')
         # self.textLastRow.textChanged.connect(self.ChangetextLastRow)
 
         self.FileNamelabel = QtWidgets.QLabel('File name')
-        self.FileNamelabel.setFixedSize(250, 25)
+        self.FileNamelabel.setFixedSize(220, 25)
 
         self.FileName = QtWidgets.QLineEdit()
-        self.FileName.setFixedSize(150, 25)
+        self.FileName.setFixedSize(120, 25)
         # self.FileName.textChanged.connect(self.FileName)
 
-        self.CityStateZiplabel = QtWidgets.QLabel('City State Zip')
-        self.CityStateZiplabel.setFixedSize(250, 25)
+        # self.CityStateZiplabel = QtWidgets.QLabel('City State Zip')
+        # self.CityStateZiplabel.setFixedSize(250, 25)
 
         self.InputCityStateZip = QtWidgets.QLineEdit()
         self.InputCityStateZip.setFixedSize(150, 25)
@@ -165,7 +169,7 @@ class WindowMain(QWidget):
         self.dbase = createConection()
         self.dict_parameter = {'dbase':self.dbase}
         self.dict_parameter['search_by_name'] = True
-        self.dict_parameter['selected_file'] = ''
+        self.dict_parameter['selected_file'] = 'not selected file'
         
         self.Table = UpdateTable(self)
 
@@ -194,7 +198,7 @@ class WindowMain(QWidget):
 
 
     def ExecuteLaunchNavigator(self):
-        # Worker.selected_file = self.selected_file        
+        # Worker.selected_file = self.selected_file
         #self.loadFileFlag = True
         #self.exportFileFlag = True        
         if self.loadFileFlag and self.exportFileFlag:
@@ -320,10 +324,12 @@ class WindowMain(QWidget):
         self.dict_parameter['selected_file'] = selected_file
         if selected_file:
             self.loadFileFlag = True
-            self.updateFile.emit()
-            # _,self.last_row_dict, self.current_row = search_check_points(self.selected_file, check_point_filename = 'check_points/last_row.json')
+            self.updateFile.emit()            
             previous_registers = getPreviousRegisters_all(self.dbase, selected_file.split('/')[-1])
-            
+            columns = show_columns(self.dbase)
+            previous_registers = pd.DataFrame(previous_registers, columns = columns)
+            print("Inside load input file:", selected_file.split('/')[-1],"#")
+            print("len previous_registers: ", len(previous_registers))
 
             list_missed_columns = validate_file_colums(selected_file, self.dict_parameter['search_by_name'])
             if len(list_missed_columns) != 0:                
@@ -349,6 +355,14 @@ class WindowMain(QWidget):
         if export_file_name:
             self.exportFileFlag = True
             print("Path to export selected: ")
+    
+    def ExecuteFilterResults(self):
+        print("Open windos filter results: ")
+        self.WindowsFilterResults = WindowsFilterResults(self.dbase, self.dict_parameter['search_by_name'])
+        self.WindowsFilterResults.selected_file = self.dict_parameter['selected_file'].split('/')[-1]        
+        # self.WindowsFilterResults.dbase = self.dbase
+        # self.WindowsFilterResults.flag_init = True
+        self.WindowsFilterResults.show()
 
     def ExecuteUploadFile(self):
         self.FileName.setText(self.dict_parameter['selected_file'].split('/')[-1])
@@ -363,7 +377,7 @@ def UpdateTable(self):
         results = getPeopleContact(self.dbase)
 
     if self.showCurrentFile.isChecked():
-        results = getPreviousRegisters_all(self.dbase, self.dict_parameter['selected_file'].split('/')[-1])    
+        results = getPreviousRegisters(self.dbase, self.dict_parameter['selected_file'].split('/')[-1])
     nrows = len(results)
     self.Table = TableUser(results, nrows, 3)
     return self.Table
@@ -397,11 +411,12 @@ def SetInicio(self):
     # Add Buttons to Buttons layout    
     self.FirstButtonlayout.addWidget(self.ButtonLaunchNavigator, 0)    
     self.FirstButtonlayout.addWidget(self.ButtonQuitNavigator, 0)
-    self.FirstButtonlayout.addWidget(self.ButtonSelectWebSite, 0)
+    # self.FirstButtonlayout.addWidget(self.ButtonSelectWebSite, 0)
     self.FirstButtonlayout.addWidget(self.ButtonSearchByAddress, 0)
     self.FirstButtonlayout.addWidget(self.ButtonSearchByName, 0)    
     self.FirstButtonlayout.addWidget(self.ButtonLoadFile, 0)    
     self.FirstButtonlayout.addWidget(self.ButtonExportFile, 0)
+    self.FirstButtonlayout.addWidget(self.ButtonFilterResults, 0)
     # Add table and side buttons to Table layout.
     self.Tablelayout.addLayout(self.SideButton)
     self.Tablelayout.addWidget(self.Table)
@@ -419,7 +434,7 @@ def SetInicio(self):
     self.SideButton.addWidget(self.FileNamelabel)
     self.SideButton.addWidget(self.FileName)
     
-    self.SideButton.addWidget(self.CityStateZiplabel)
+    # self.SideButton.addWidget(self.CityStateZiplabel)
     self.SideButton.addWidget(self.InputCityStateZip)
 
     self.SideButton.addWidget(self.ButtonStartPause)
@@ -492,7 +507,7 @@ class WindowAlertCatpcha(QWidget):
         time.sleep(0.2)
         self.close() 
         self.reactivateSignal.emit()
- 
+
 class WindowsSelectCheckPoint(QWidget):
     setcheckpoint = pyqtSignal()
     def __init__(self):
@@ -522,11 +537,146 @@ class WindowsSelectCheckPoint(QWidget):
 
     def setRestart(self):
         print("Restar")
+        print("file name: ", self.selected_file, "#")
         time.sleep(0.2)
         self.close()
-        deltePreviosRegister(self.dbase, self.selected_file)        
+        deletePreviosRegister(self.dbase, self.selected_file)
         self.previous_registers = pd.DataFrame()
         self.setcheckpoint.emit()
+
+class WindowsFilterResults(QWidget):
+    def __init__(self, dbase, search_by_name):
+        super().__init__()
+        self.search_by_name = search_by_name
+        self.dbase = dbase
+        self.setWindowTitle("Filter results")
+        self.setGeometry(150, 150, 260, 180)        
+
+        self.ButtonFilter = QtWidgets.QPushButton('Filter')
+        self.ButtonFilter.setFixedSize(120, 20)
+        self.ButtonFilter.clicked.connect(self.Executemakefilter)
+
+        self.ButtonExport = QtWidgets.QPushButton('Export File')
+        self.ButtonExport.setFixedSize(120, 20)
+        self.ButtonExport.clicked.connect(self.ExecuteExportFile)
+
+        self.Mainlayout = QVBoxLayout()
+        self.Mainlayout.addWidget(self.ButtonFilter)
+        self.Mainlayout.addWidget(self.ButtonExport)
+
+        self.layout = QVBoxLayout()
+
+        self.current_file_checkbox = QCheckBox("Current File")        
+        self.current_file_checkbox.setCheckState(Qt.CheckState.Checked)
+        self.current_file_checkbox.setChecked(True)
+        self.selected_file = '*'
+        self.flag_init = False
+        self.current_file_checkbox.stateChanged.connect(self.FileSelected)
+
+        self.database_checkbox = QCheckBox("Data base")        
+        self.database_checkbox.setCheckState(Qt.CheckState.Checked)
+        self.database_checkbox.setChecked(False)
+        self.database_checkbox.stateChanged.connect(self.DateBaseSelected)
+        # self.df = pd.DataFrame(getAllInfoPeopleContact(self.dbase))
+
+        self.city_checkbox = QCheckBox("City")
+        self.city_checkbox.setCheckState(Qt.CheckState.Checked)
+        self.city_checkbox.setChecked(False)
+        # self.city_checkbox.stateChanged.connect(self.FilterCity)
+        
+        self.state_checkbox = QCheckBox("State")
+        self.state_checkbox.setCheckState(Qt.CheckState.Checked)
+        self.state_checkbox.setChecked(False)
+        # self.state_checkbox.stateChanged.connect(self.FilterState)
+
+        self.zip_checkbox = QCheckBox("Zip")
+        self.zip_checkbox.setCheckState(Qt.CheckState.Checked)
+        self.zip_checkbox.setChecked(False)
+        # self.zip_checkbox.stateChanged.connect(self.FilterZip)
+
+        if self.search_by_name:
+            self.address_name_checkbox = QCheckBox("Name")
+        else:
+            self.address_name_checkbox = QCheckBox("Address")
+        self.address_name_checkbox.setCheckState(Qt.CheckState.Checked)
+        self.address_name_checkbox.setChecked(False)
+        # self.address_name_checkbox.stateChanged.connect(self.FilterAddress)
+
+        self.layout.addWidget(self.current_file_checkbox)
+        self.layout.addWidget(self.database_checkbox)
+        self.layout.addWidget(self.city_checkbox)
+        self.layout.addWidget(self.state_checkbox)
+        self.layout.addWidget(self.zip_checkbox)
+        self.layout.addWidget(self.address_name_checkbox)
+        self.layout.addWidget(self.ButtonFilter)
+        self.layout.addWidget(self.ButtonExport)
+        self.setLayout(self.layout)
+
+    def FileSelected(self):
+        if self.current_file_checkbox.isChecked():
+            self.database_checkbox.setChecked(False)
+            self.current_file_checkbox.setChecked(True)
+        else:
+            self.database_checkbox.setChecked(True)
+            self.current_file_checkbox.setChecked(False)
+
+    def DateBaseSelected(self):
+        if self.database_checkbox.isChecked():
+            self.current_file_checkbox.setChecked(False)
+            self.database_checkbox.setChecked(True)
+        else:
+            self.current_file_checkbox.setChecked(True)
+            self.database_checkbox.setChecked(False)
+
+    def Executemakefilter(self):
+        print("Make filter")
+        if self.current_file_checkbox.isChecked():
+            data = getPreviousRegisters_all(self.dbase, self.selected_file)
+            print("Date related only to the file: ", self.selected_file, len(data))
+        else:
+            data = getAllInfoPeopleContact(self.dbase)
+            print("Completa data ")
+        print("selected file inside make filter: ", self.selected_file)
+        # build dataframe
+        columns = show_columns(self.dbase)
+        self.df = pd.DataFrame(data, columns = columns)
+
+        # Flag selected city
+        if self.city_checkbox.isChecked():
+            self.cond1 = self.df.search_city == self.df.city
+        else:
+            self.cond1 = self.df.search_city == self.df.search_city
+        
+        # Flage selected state
+        if self.state_checkbox.isChecked():
+            self.cond2 = self.df.search_state == self.df.state
+        else:
+            self.cond2 = self.df.search_state == self.df.search_state
+        
+        # Flag selected zip code
+        if self.address_name_checkbox.isChecked():
+            if self.search_by_name:
+                self.cond3 = self.df.search_address == self.df.address
+            else:
+                self.cond3 = self.df.search_name == self.df.name
+        else:
+            self.cond3 = self.df.search_address == self.df.search_address
+
+        # Flag selected address
+        if self.address_name_checkbox.isChecked():
+            self.cond4 = self.df.search_address == self.df.address
+        else:
+            self.cond4 = self.df.search_address == self.df.search_address
+    
+        # Make filtered
+        self.df_filtered = self.df[self.cond1 & self.cond2 & self.cond3 & self.cond4]
+        print("The resulted file contain: {} Total rows".format(len(self.df_filtered)))
+
+    def ExecuteExportFile(self):
+        print("Make filter")        
+        export_file_name, _ = QFileDialog.getSaveFileName(self, "Save File", "", "All Files (*)")
+        if export_file_name:
+            self.df_filtered.to_csv(export_file_name)
 
 class WindowAlertMissedColumns(QWidget):
     # reactivateSignal = pyqtSignal()
@@ -539,15 +689,8 @@ class WindowAlertMissedColumns(QWidget):
         self.ButtonError.setFixedSize(180, 20)
         self.ButtonError.clicked.connect(self.CloseWindows)
 
-        # self.MissedColumns = QtWidgets.QTextEdit()        
-        # self.MissedColumns.setFixedSize(350, 100)
-        # self.MissedColumns.setText(missedcolumns)
-
-
         self.Mainlayout = QVBoxLayout()
-        self.Mainlayout.addWidget(self.ButtonError)
-        # self.Mainlayout.addWidget(self.MissedColumns)
-        
+        self.Mainlayout.addWidget(self.ButtonError)        
 
         self.setLayout(self.Mainlayout) 
 
