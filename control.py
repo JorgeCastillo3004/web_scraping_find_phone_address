@@ -72,7 +72,7 @@ def search_check_points(filepath, check_point_filename = 'check_points/last_row.
 
 #########################################################################################
 #                                                                                       #
-#                                   MAIN FUNCTINS                                       #
+#                                   MAIN FUNCTIONS                                       #
 #                                                                                       #
 #########################################################################################
 def validateField(field):
@@ -147,20 +147,24 @@ def SelectSearch(by_name = True, max_try = 15):
             if count == max_try:
                 flag_wait = False                
 
-def build_search_fields(search_by_name, row):
-    regular_columns = ['first_name', 'last_name', 'Address', 'City', 'State', 'Zip']
-    if search_by_name:
-        first_name_str = validateField(row[regular_columns[0]].item())
-        last_name_str = validateField(row[regular_columns[1]].item())
-        first_box = first_name_str +' ' + last_name_str
+def build_search_fields(search_by_name, row, dict_columns_names):    
+    # regular_columns = ['first_name', 'last_name', 'Address', 'City', 'State', 'Zip']    
+    first_box = []
+    if search_by_name:        
+        for column_name in dict_columns_names['name']:
+            first_box.append(validateField(row[column_name].item()))
+        
     else:
-        first_box = validateField(row[regular_columns[2]].item())
+        for column_name in dict_columns_names['address']:
+            first_box.append(validateField(row[column_name].item()))
 
-    city_str = validateField(row[regular_columns[3]].item())
-    state_str = validateField(row[regular_columns[4]].item())
-    zip_str = validateField(row[regular_columns[5]].item())
-    address = city_str +' ' + state_str + ' ' + zip_str
-    return first_box, address
+    first_box = ' '.join(first_box)
+
+    city_str = validateField(row[dict_columns_names['city_state_zip'][0]].item())
+    state_str = validateField(row[dict_columns_names['city_state_zip'][1]].item())
+    zip_str = validateField(row[dict_columns_names['city_state_zip'][2]].item())
+    second_box = city_str +' ' + state_str + ' ' + zip_str
+    return first_box, second_box
 
 def sendSearch(name, address, search_by_name):
     wait = WebDriverWait(driver, 10)
@@ -248,7 +252,7 @@ def get_address(card_block):
             for i, old_ in enumerate(old_address):                
                 dict_old_address[i] = old_.text.replace('\n',' ')
             break   
-    return {'main_address': main_address, 'past_address':dict_old_address,
+    return {'address': main_address, 'past_address':dict_old_address,
             'city':city, 'state':state, 'zip':zip_code}
 
 def get_name_age(card_block):    
@@ -278,9 +282,9 @@ def get_phone_numbers(card_block):
             else:
                 dict_phones[count -1] = phone_number.text
             count +=1
-    return {'primary_phone':primary_phone, 'list_phones':dict_phones}
+    return {'phone':primary_phone, 'list_phones':dict_phones}
 
-def get_block_results(df_all, current_row, row, dict_parameters):
+def get_block_results(df_all, current_row, row, dict_parameters, enable_filter = False):
 
     global first_field, second_field, dbase
 
@@ -294,6 +298,8 @@ def get_block_results(df_all, current_row, row, dict_parameters):
         dict_register['search_name'] = ''
         dict_register['search_address'] = first_field
     
+    dict_register['first_name'] = row.first_name.item()
+    dict_register['last_name'] = row.last_name.item()
     dict_register['search_city'] = row.City.item()
     dict_register['search_state'] = row.State.item()
     dict_register['search_zip'] = row.Zip.item()
@@ -315,12 +321,20 @@ def get_block_results(df_all, current_row, row, dict_parameters):
         dict_register.update(dict_address)
 
         dict_register['status'] = 'found'
+        dict_register['filename'] = dict_parameters['selected_file'].split('/')[-1]
         for i in dict_register.keys():
-            dict_partial_info[i] = [str(dict_register[i])]
-        
-        insertNewRegister(dbase, dict_register, dict_parameters['selected_file'].split('/')[-1])        
-        df = pd.DataFrame.from_dict(dict_partial_info)        
-        df_all = pd.concat([df_all, df])       
+            dict_partial_info[i] = [str(dict_register[i])]        
+
+        # Condition to only take with the same last name
+        if enable_filter:            
+            if dict_register['last_name'] in dict_register['name'].split():
+                insertNewRegister(dbase, dict_register, dict_parameters['selected_file'].split('/')[-1])
+                df = pd.DataFrame.from_dict(dict_partial_info)        
+                df_all = pd.concat([df_all, df])
+        else:            
+            insertNewRegister(dbase, dict_register, dict_parameters['selected_file'].split('/')[-1])
+            df = pd.DataFrame.from_dict(dict_partial_info)
+            df_all = pd.concat([df_all, df])            
     
     return df_all
 
@@ -329,7 +343,7 @@ def nextPage(max_try = 2):
     count = 0
     while flag_click_next:
         try:
-            button_next = driver.find_element(By.XPATH, '//a[@class="btn"]')
+            button_next = driver.find_element(By.XPATH, '//a[@class="btn" and contains(text(),"Next Page")]')
             button_next.click()
             flag_continue = True
             flag_click_next = False
@@ -467,10 +481,56 @@ def validate_file_colums(selected_file, search_by_name):
             list_missed.append(column_name)
     return list_missed
 
+def filter_by_file(df_data_base, df_file, cond1_e = True, cond2_e = True, cond3_e = True, cond4_e = True, cond5_e = True):    
+    dict_columns_names = load_check_point('check_points/columns_names.json')
+    list_index_unfound = []
+    df_filtered = pd.DataFrame()
+    for row_number in range(0, len(df_file)):
+            # Cond1 address
+        print("-", end= '')
+        if cond1_e:            
+            cond1 = df_data_base.address == df_file.iloc[row_number][dict_columns_names['address'][0]]
+        else:            
+            cond1 = df_data_base.address == df_data_base.address
+            
+        if cond2_e:
+            last_name = dict_columns_names['name'][1]
+            cond2 = df_data_base.apply(lambda row: df_file.iloc[row_number][last_name].lower() in row['name'].lower().split(), axis=1)
+        else:
+            cond2 = df_data_base.name == df_data_base.name
+            
+        if cond3_e:
+            cond3 = df_data_base.city == df_file.iloc[row_number][dict_columns_names['city_state_zip'][0]]
+        else:
+            cond3 = df_data_base.city == df_data_base.city
+        # Match State
+        if cond4_e:
+            cond4 = df_data_base.state == df_file.iloc[row_number][dict_columns_names['city_state_zip'][1]]
+        else:
+            cond4 = df_data_base.state == df_data_base.state
+        # Match zip code
+        if cond5_e:
+            cond5 = df_data_base.zip == df_file.iloc[row_number][dict_columns_names['city_state_zip'][2]]
+        else:
+            cond5 = df_data_base.zip == df_data_base.zip
+
+        df_row = df_data_base[cond1 & cond2 & cond3]
+        if len(df_row)==0:
+            list_index_unfound.append(row_number)
+        else:
+            df_filtered = pd.concat([df_filtered, df_row])
+            
+    df_unfound = df_file.iloc[list_index_unfound]    
+    df_unfound = df_unfound.drop_duplicates().reset_index(drop=True)    
+    df_filtered = df_filtered.drop_duplicates().reset_index(drop=True)
+
+    return df_filtered, df_unfound
+
+
 def processControl(t, dict_parameters):    
     global df, df_all, last_row
     global all_info, last_row_dict, dict_issues ## delete
-    global first_field, second_field, flag_click_next, dbase, row, count_except
+    global first_field, second_field, flag_click_next, dbase, row, count_except, dict_columns_names
     
     _stop = False
     CatpchaDetected = False
@@ -482,14 +542,14 @@ def processControl(t, dict_parameters):
         # print("T inicial: ", t)
         CatpchaDetected = False        
         df = pd.read_csv(dict_parameters['selected_file'])
-        df_all = pd.DataFrame(dict_parameters['previous_registers'])
+        df_all = dict_parameters['previous_registers']        
+        dict_columns_names = load_check_point('check_points/columns_names.json')
         # DataBase connection
         # dbase = createConection()  # self.dict_parameter['dbase']
         t +=1
-        count_except = 0     
-
-        # Select type of search
-        SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15)
+        count_except = 0
+        
+        SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15) # Select type of search
 
     current_row = (t-1)//nsteps + last_row
     print("t:", t, "Step: ", (t-1)%nsteps," Row: ", current_row + 1 ,'/',len(df))
@@ -499,81 +559,79 @@ def processControl(t, dict_parameters):
         if not CatpchaDetected:
             if (t-1)%nsteps == 0:            
                 row = df.iloc[[current_row]]
-            # try:
-            if (t-1)%nsteps == 1:
-                first_field, second_field = build_search_fields(dict_parameters['search_by_name'], row)
-                # flag_click_next = True
-            if (t-1)%nsteps == 2:  
-                sendSearch(first_field, second_field, dict_parameters['search_by_name'])
-            if (t-1)%nsteps == 3:                    
-                CatpchaDetected = detectCatpcha(max_try = 2)
+            try:
+                if (t-1)%nsteps == 1:
+                    first_field, second_field = build_search_fields(dict_parameters['search_by_name'], row, dict_columns_names)                
+                    # flag_click_next = True
+                if (t-1)%nsteps == 2:  
+                    sendSearch(first_field, second_field, dict_parameters['search_by_name'])
+                if (t-1)%nsteps == 3:                    
+                    CatpchaDetected = detectCatpcha(max_try = 2)
+                    if CatpchaDetected:
+                        _stop = True
+                if (t-1)%nsteps == 4:
+                    wait_results(max_try = 2)
+                if (t-1)%nsteps >= 5 and (t-1)%nsteps <= 8:
+                    # if flag_click_next:
+                    if (t-1)%nsteps == 5:                           
+                        imitateBehavior(max_tries = 10)
+                    if (t-1)%nsteps == 6:
+                        df_all = get_block_results(df_all, current_row, row, dict_parameters, enable_filter = False)
+                    if (t-1)%nsteps == 7:
+                        webdriver.ActionChains(driver).send_keys(Keys.END).perform()
+                        flag_click_next = nextPage(max_try = 2)# Regresar al paso 4                            
+                        if flag_click_next:
+                            print("#"*50)
+                            print("More pages found: ")
+                            t = t - 4
+                            print("Go back step: 4")
+                if (t-1)%nsteps == 8:
+                    if len(df_all) != 0:
+                        list_colums = ['search_name','search_address','first_name','last_name', 'search_city', 'search_state', 'search_zip',
+                        'address','city', 'state', 'zip','name','age','phone',
+                        'list_phones','past_address', 'status']
+                        print("df len: ", len(df_all))
+                        # paht_out = dict_parameters['export_file_name']
+                        # dict_parameters['export_file_name'] = dict_parameters['export_file_name'] if dict_parameters['export_file_name'].endswith('.csv') else dict_parameters['export_file_name'] + '.csv'
+                        # df_all[list_colums].to_csv(dict_parameters['export_file_name'], index= True)
+
+                    # go_back(max_try = 3)
+                    driver.get('https://www.fastpeoplesearch.com/')
+                    SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15)
+                    search_box_found  = wait_search_box(dict_parameters['search_by_name'], max_try = 4)
+                    while not search_box_found:
+                        driver.get('https://www.fastpeoplesearch.com/')
+                        search_box_found  = wait_search_box(dict_parameters['search_by_name'], max_try = 4)                    
+                    if current_row + 1 == len(df):
+                        print("Stop last row")
+                        _stop = True
+                        t = -1
+                count_except = 0
+            except Exception as e:
+                print("Current t: ", t)                
+                t = t - 1
+                CatpchaDetected = detectCatpcha()
                 if CatpchaDetected:
                     _stop = True
-            if (t-1)%nsteps == 4:
-                wait_results(max_try = 2)
-            if (t-1)%nsteps >= 5 and (t-1)%nsteps <= 8:
-                # if flag_click_next:
-                if (t-1)%nsteps == 5:                           
-                    imitateBehavior(max_tries = 10)
-                if (t-1)%nsteps == 6:
-                    df_all = get_block_results(df_all, current_row, row, dict_parameters)
-                if (t-1)%nsteps == 7:
-                    webdriver.ActionChains(driver).send_keys(Keys.END).perform()
-                    flag_click_next = nextPage(max_try = 2)# Regresar al paso 4                            
-                    if flag_click_next:
-                        print("#"*50)
-                        print("More pages found: ")
-                        t = t - 4
-                        print("Go back step: 4")
-            if (t-1)%nsteps == 8:
-                if len(df_all) != 0:
-                    if dict_parameters['search_by_name']:                                
-                        list_colums = ['search_name', 'search_city', 'search_state', 'search_zip',
-                        'main_address','city', 'state', 'zip','name','age','primary_phone',
-                        'list_phones','past_address', 'status']
-                    else:
-                        list_colums = ['search_address', 'search_city', 'search_state', 'search_zip',
-                        'main_address','city', 'state', 'zip','name','age','primary_phone',
-                        'list_phones','past_address', 'status']
-                    df_all[list_colums].to_csv(dict_parameters['export_file_name'],index= True)
-
-                # go_back(max_try = 3)
-                driver.get('https://www.fastpeoplesearch.com/')
-                SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15)
-                search_box_found  = wait_search_box(dict_parameters['search_by_name'], max_try = 4)
-                while not search_box_found:
-                    driver.get('https://www.fastpeoplesearch.com/')
-                    search_box_found  = wait_search_box(dict_parameters['search_by_name'], max_try = 4)                    
-                if current_row + 1 == len(df):
-                    print("Stop last row")
-                    _stop = True
-                    t = -1
-            count_except = 0
-            # except Exception as e:
-            #     print("Current t: ", t)                
-            #     t = t - 1
-            #     CatpchaDetected = detectCatpcha()
-            #     if CatpchaDetected:
-            #         _stop = True
                 
-            #     if not CatpchaDetected:                    
-            #         print("Close aids")
-            #         # try: close aids
-            #         # dict_issues[current_row] = {'name':first_field, 'address':second_field}
-            #         # saveCheckPoint('check_points/issues_row.json', dict_issues)
-            #         # driver.get('https://www.fastpeoplesearch.com/')
-            #         # time.sleep(3)
+                if not CatpchaDetected:                    
+                    print("Close aids")
+                    # try: close aids
+                    # dict_issues[current_row] = {'name':first_field, 'address':second_field}
+                    # saveCheckPoint('check_points/issues_row.json', dict_issues)
+                    # driver.get('https://www.fastpeoplesearch.com/')
+                    # time.sleep(3)
                     
-            #     count_except += 1
-            #     if count_except == 3:
-            #         t = t - (t-1)%nsteps
-            #         driver.get('https://www.fastpeoplesearch.com/')
-            #         SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15)
-            #         wait_search_box(dict_parameters['search_by_name'], max_try = 4)
-            #         count_except = 0
-            #     if count_except == 5:
-            #         t = t - (t-1)%nsteps + nsteps # pass to next row
-            #     print("t: ", t ,"Restart step: ", (t-1)%nsteps)
+                count_except += 1
+                if count_except == 3:
+                    t = t - (t-1)%nsteps
+                    driver.get('https://www.fastpeoplesearch.com/')
+                    SelectSearch(by_name = dict_parameters['search_by_name'] , max_try = 15)
+                    wait_search_box(dict_parameters['search_by_name'], max_try = 4)
+                    count_except = 0
+                if count_except == 5:
+                    t = t - (t-1)%nsteps + nsteps # pass to next row
+                print("t: ", t ,"Restart step: ", (t-1)%nsteps)
 
             t +=1            
     return t, _stop, CatpchaDetected, current_row
