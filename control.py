@@ -514,7 +514,7 @@ def filter_by_file(df_data_base, df_file, cond1_e = True, cond2_e = True, cond3_
         else:
             cond5 = df_data_base.zip == df_data_base.zip
 
-        df_row = df_data_base[cond1 & cond2 & cond3]
+        df_row = df_data_base[cond1 & cond2 & cond3][0:1]
         if len(df_row)==0:
             list_index_unfound.append(row_number)
         else:
