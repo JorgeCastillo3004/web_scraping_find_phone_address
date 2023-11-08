@@ -284,6 +284,14 @@ def get_phone_numbers(card_block):
             count +=1
     return {'phone':primary_phone, 'list_phones':dict_phones}
 
+def clear_df_input(df_input, dict_columns_names):
+    df_input[dict_columns_names['name'][0]] = df_input[dict_columns_names['name'][0]].fillna('').astype(str)
+    df_input[dict_columns_names['name'][1]] = df_input[dict_columns_names['name'][1]].fillna('').astype(str)
+    df_input[dict_columns_names['city_state_zip'][0]] = df_input[dict_columns_names['city_state_zip'][0]].fillna('').astype(str)
+    df_input[dict_columns_names['city_state_zip'][1]] = df_input[dict_columns_names['city_state_zip'][1]].fillna('').astype(str)
+    df_input[dict_columns_names['city_state_zip'][2]] = df_input[dict_columns_names['city_state_zip'][2]].fillna('').astype(str)    
+    return df_input
+
 def get_block_results(df_all, current_row, row, dict_parameters, dict_columns_names,enable_filter = False):
 
     global first_field, second_field, dbase
@@ -481,8 +489,9 @@ def validate_file_colums(selected_file, search_by_name):
             list_missed.append(column_name)
     return list_missed
 
-def filter_by_file(df_data_base, df_file, cond1_e = True, cond2_e = True, cond3_e = True, cond4_e = True, cond5_e = True):    
+def filter_by_file(df_data_base, df_file, cond1_e = True, cond2_e = True, cond3_e = True, cond4_e = True, cond5_e = True):
     dict_columns_names = load_check_point('check_points/columns_names.json')
+    df_file = clear_df_input(df_file, dict_columns_names)
     list_index_unfound = []
     df_filtered = pd.DataFrame()
     for row_number in range(0, len(df_file)):
@@ -514,7 +523,8 @@ def filter_by_file(df_data_base, df_file, cond1_e = True, cond2_e = True, cond3_
         else:
             cond5 = df_data_base.zip == df_data_base.zip
 
-        df_row = df_data_base[cond1 & cond2 & cond3][0:1]
+        cond6 = df_data_base.phone != 'unfound'
+        df_row = df_data_base[cond1 & cond2 & cond3 & cond4 & cond5 & cond6][0:1]
         if len(df_row)==0:
             list_index_unfound.append(row_number)
         else:
@@ -541,9 +551,12 @@ def processControl(t, dict_parameters):
     if t == 0:
         # print("T inicial: ", t)
         CatpchaDetected = False        
-        df = pd.read_csv(dict_parameters['selected_file'])
+
         df_all = dict_parameters['previous_registers']        
         dict_columns_names = load_check_point('check_points/columns_names.json')
+        df = pd.read_csv(dict_parameters['selected_file'])
+        df = clear_df_input(df, dict_columns_names)
+        print("Input file clear")
         # DataBase connection
         # dbase = createConection()  # self.dict_parameter['dbase']
         t +=1
