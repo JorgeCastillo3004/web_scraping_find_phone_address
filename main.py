@@ -682,33 +682,35 @@ class WindowsFilterResults(QWidget):
         columns = show_columns(self.dbase)        
         data = getAllInfoPeopleContact(self.dbase)
         df_data_base = pd.DataFrame(data, columns = columns)
-        if self.selected_file != '':
-            df_file = pd.read_csv(self.selected_file)        
-        
-            # Flag selected city
-            cond1_e = self.address_check.isChecked()
-            cond2_2 = self.last_name_checkbox.isChecked()
-            cond2_3 = self.city_checkbox.isChecked()
-            cond2_4 = self.state_checkbox.isChecked()
-            cond2_5 = self.zip_checkbox.isChecked()
-        
-            # Make filtered
-            # self.df_filtered = self.df[self.cond1 & self.cond2 & self.cond3 & self.cond4]
-            self.df_filtered, self.df_unfound = filter_by_file(df_data_base, df_file, cond1_e = True, cond2_e = True, cond3_e = True, cond4_e = True, cond5_e = True)
-            print("The resulted file contain: {} Total rows".format(len(self.df_filtered)))
-            print("Unfound rows: ",len(self.df_unfound))
-            QMessageBox.about(self, "Filtered results ", "Total results {}".format(len(self.df_filtered)))
+
+        df_file = pd.read_csv(self.selected_file)        
+    
+        # Flag selected city
+        cond1_e = self.address_check.isChecked()
+        cond2_2 = self.last_name_checkbox.isChecked()
+        cond2_3 = self.city_checkbox.isChecked()
+        cond2_4 = self.state_checkbox.isChecked()
+        cond2_5 = self.zip_checkbox.isChecked()
+    
+        # Make filtered
+        # self.df_filtered = self.df[self.cond1 & self.cond2 & self.cond3 & self.cond4]
+        self.df_filtered, self.df_unfound = filter_by_file(df_data_base, df_file, cond1_e = True, cond2_e = True, cond3_e = True, cond4_e = True, cond5_e = True)
+        print("The resulted file contain: {} Total rows".format(len(self.df_filtered)))
+        print("Unfound rows: ",len(self.df_unfound))
+        QMessageBox.about(self, "Filtered results ", "Total results {}".format(len(self.df_filtered)))        
+
+    def ExecuteExportFile(self):
+        if self.selected_file != 'not selected file':   
+            export_file_name, _ = QFileDialog.getSaveFileName(self, "Save File", "", "All Files (*)")
+            time.sleep(0.3)
+            if export_file_name!='':
+                self.signal_make_filter.emit()
+                self.df_filtered.to_csv(export_file_name)
+                export_file_name = export_file_name if export_file_name.endswith('.csv') else export_file_name + '.csv'
+                self.df_unfound.to_csv(export_file_name.replace('.csv', '_pending.csv'))
         else:
             QMessageBox.about(self, "Error", "Select an input file")
-
-    def ExecuteExportFile(self):        
-        export_file_name, _ = QFileDialog.getSaveFileName(self, "Save File", "", "All Files (*)")
-        time.sleep(0.3)
-        if export_file_name!='':
-            self.signal_make_filter.emit()
-            self.df_filtered.to_csv(export_file_name)
-            export_file_name = export_file_name if export_file_name.endswith('.csv') else export_file_name + '.csv'
-            self.df_unfound.to_csv(export_file_name.replace('.csv', '_pending.csv'))
+            self.close()
 
 class WindowSelecColumnsNames(QWidget):
     signal_launch_previous_point = pyqtSignal()
